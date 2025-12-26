@@ -234,6 +234,7 @@ const toeflReadingQuestions: QuestionData[] = [
 
 const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [activeWritingTask, setActiveWritingTask] = useState<"task1" | "task2">("task1");
   const isSimulasi = result.exam_mode === "simulasi";
 
   const getScoreColor = (score: number, type: "ielts" | "toefl") => {
@@ -401,6 +402,8 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
     reading?: Record<string, string>;
     structure?: Record<string, string>;
     writing?: WritingAnswerData;
+    writingTask1?: WritingAnswerData;
+    writingTask2?: WritingAnswerData;
   }
 
   const answers = result.answers as AnswersData | null;
@@ -624,22 +627,74 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
         {/* Writing Feedback Tab - IELTS Only */}
         {examType === "ielts" && (
           <TabsContent value="writing" className="mt-4 space-y-6">
-            {answers?.writing ? (
-              <WritingAnswerFeedback
-                userAnswer={answers.writing.userAnswer || ""}
-                feedbackItems={answers.writing.feedbackItems || []}
-                vocabularyData={answers.writing.vocabularyData}
-              />
-            ) : (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <PenTool className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-                  <p className="text-muted-foreground">
-                    Writing feedback tidak tersedia untuk ujian ini.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            {/* Task Selector */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground">Pilih Task:</span>
+              <div className="flex gap-2">
+                <Button
+                  variant={activeWritingTask === "task1" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveWritingTask("task1")}
+                  className="min-w-[140px]"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Writing Task 1
+                </Button>
+                <Button
+                  variant={activeWritingTask === "task2" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveWritingTask("task2")}
+                  className="min-w-[140px]"
+                >
+                  <PenTool className="w-4 h-4 mr-2" />
+                  Writing Task 2
+                </Button>
+              </div>
+            </div>
+
+            {/* Task Description */}
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <h4 className="font-medium text-sm mb-1">
+                {activeWritingTask === "task1" 
+                  ? "Academic Writing Task 1" 
+                  : "Writing Task 2 (Essay)"}
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                {activeWritingTask === "task1"
+                  ? "Describe visual information (graph, chart, table, or diagram) in at least 150 words."
+                  : "Write an essay in response to a point of view, argument or problem in at least 250 words."}
+              </p>
+            </div>
+
+            {/* Writing Feedback Content */}
+            {(() => {
+              const currentTask = activeWritingTask === "task1" 
+                ? (answers?.writingTask1 || answers?.writing)
+                : answers?.writingTask2;
+              
+              if (currentTask) {
+                return (
+                  <WritingAnswerFeedback
+                    userAnswer={currentTask.userAnswer || ""}
+                    feedbackItems={currentTask.feedbackItems || []}
+                    vocabularyData={currentTask.vocabularyData}
+                  />
+                );
+              }
+              
+              return (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <PenTool className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground">
+                      {activeWritingTask === "task1" 
+                        ? "Writing Task 1 feedback tidak tersedia untuk ujian ini."
+                        : "Writing Task 2 feedback tidak tersedia untuk ujian ini."}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </TabsContent>
         )}
 
