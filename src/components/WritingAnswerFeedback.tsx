@@ -38,7 +38,7 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, ArrowRight } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2 } from "lucide-react";
 
 /**
  * Interface untuk item feedback writing
@@ -104,11 +104,13 @@ interface VocabularyData {
  * @property {string} userAnswer - Jawaban essay pengguna yang akan ditampilkan
  * @property {WritingFeedback[]} feedbackItems - Array feedback untuk di-highlight dalam jawaban
  * @property {VocabularyData} [vocabularyData] - Data vocabulary opsional untuk analisis CEFR
+ * @property {number} [minimumWords] - Minimum word count requirement (default: 150)
  */
 interface WritingAnswerFeedbackProps {
   userAnswer: string;
   feedbackItems: WritingFeedback[];
   vocabularyData?: VocabularyData;
+  minimumWords?: number;
 }
 
 const categoryNames = {
@@ -159,11 +161,15 @@ const cefrBarColors = {
   C2: "bg-red-500",
 };
 
-const WritingAnswerFeedback = ({ userAnswer, feedbackItems, vocabularyData }: WritingAnswerFeedbackProps) => {
+const WritingAnswerFeedback = ({ userAnswer, feedbackItems, vocabularyData, minimumWords = 150 }: WritingAnswerFeedbackProps) => {
   const [activeCategory, setActiveCategory] = useState<keyof typeof categoryNames>("taskAchievement");
   const [vocabSubTab, setVocabSubTab] = useState<"distribution" | "errors">("distribution");
 
   const categories = Object.keys(categoryNames) as Array<keyof typeof categoryNames>;
+
+  // Calculate word count
+  const wordCount = userAnswer.trim().split(/\s+/).filter(word => word.length > 0).length;
+  const hasReachedMinimum = wordCount >= minimumWords;
 
   // Filter feedback items by category
   const filteredFeedback = feedbackItems.filter((item) => item.category === activeCategory);
@@ -281,6 +287,38 @@ const WritingAnswerFeedback = ({ userAnswer, feedbackItems, vocabularyData }: Wr
 
   return (
     <div className="bg-card rounded-xl border border-border p-6">
+      {/* Word Count Section */}
+      <div className="text-center mb-6">
+        <div className="mb-3">
+          <span className="text-4xl font-bold text-primary">{wordCount}</span>
+          <span className="text-xl text-muted-foreground ml-2">words</span>
+        </div>
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+          hasReachedMinimum 
+            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" 
+            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+        }`}>
+          {hasReachedMinimum ? (
+            <>
+              <CheckCircle2 className="w-5 h-5" />
+              <span className="text-sm font-medium">
+                Great! You've reached the minimum word count of {minimumWords} words.
+              </span>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="w-5 h-5" />
+              <span className="text-sm font-medium">
+                You need {minimumWords - wordCount} more words to reach the minimum of {minimumWords} words.
+              </span>
+            </>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Content directly copied from the writing task is excluded from the word count.
+        </p>
+      </div>
+
       <h3 className="text-xl font-bold mb-6">Your Answer</h3>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

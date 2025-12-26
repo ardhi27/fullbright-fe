@@ -678,6 +678,7 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                     userAnswer={currentTask.userAnswer || ""}
                     feedbackItems={currentTask.feedbackItems || []}
                     vocabularyData={currentTask.vocabularyData}
+                    minimumWords={activeWritingTask === "task1" ? 150 : 250}
                   />
                 );
               }
