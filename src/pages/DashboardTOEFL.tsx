@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo-wordmark.png";
 import { useExamResults, type ExamResult } from "@/hooks/useExamResults";
-import ExamHistoryCard from "@/components/dashboard/ExamHistoryCard";
-import ExamResultDetail from "@/components/dashboard/ExamResultDetail";
+import ExamHistoryCard from "@/features/dashboard/components/ExamHistoryCard";
+import ExamResultDetail from "@/features/dashboard/components/ExamResultDetail";
 
 type PackageLevel = "STARTER" | "INTERMEDIATE" | "ADVANCE";
 

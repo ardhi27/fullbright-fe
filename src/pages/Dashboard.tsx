@@ -5,14 +5,14 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parse, format } from "date-fns";
 import { Calendar, Clock, Headphones, BookOpen, FileText, Pen } from "lucide-react";
-import WritingCriteriaBreakdown from "@/components/WritingCriteriaBreakdown";
-import WritingAnswerFeedback from "@/components/WritingAnswerFeedback";
+import WritingCriteriaBreakdown from "@/features/exam/components/WritingCriteriaBreakdown";
+import WritingAnswerFeedback from "@/features/exam/components/WritingAnswerFeedback";
 
 // Dashboard Components
 import {
@@ -23,11 +23,11 @@ import {
   ExamListItem,
   SectionResults,
   ToeflScoreCard,
-} from "@/components/dashboard";
+} from "@/features/dashboard/components";
 
 // Types & Data
 import type { ExamSession, ExamType, ExamStatus, ToeflSectionData, IELTSSections } from "@/types/dashboard";
-import { mockExamSessions } from "@/data/mockExamSessions";
+import { mockExamSessions } from "@/features/dashboard/data/mockExamSessions";
 
 const Dashboard = () => {
   const navigate = useNavigate();
