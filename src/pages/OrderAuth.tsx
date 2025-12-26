@@ -126,15 +126,20 @@ const OrderAuth = () => {
           },
         });
 
-        // If the user already exists, we can't know their password.
-        // Redirect them to the login page instead of showing a dead-end error.
-        if (signUpError?.message?.includes("User already registered")) {
-          redirectToLogin("Akun sudah terdaftar. Silakan login untuk melanjutkan.");
-          return;
-        }
-
+        // If signup fails for any reason (most commonly: user already exists),
+        // fall back to manual login instead of showing a dead-end error.
         if (signUpError) {
-          throw new Error("Gagal membuat akun: " + signUpError.message);
+          const isAlreadyRegistered =
+            signUpError.message?.toLowerCase().includes("already registered") ||
+            signUpError.message?.toLowerCase().includes("already exists") ||
+            (signUpError as any)?.status === 422;
+
+          redirectToLogin(
+            isAlreadyRegistered
+              ? "Akun sudah terdaftar. Silakan login untuk melanjutkan."
+              : "Login otomatis tidak tersedia. Silakan login secara manual."
+          );
+          return;
         }
 
         // Try sign in again after signup
@@ -150,7 +155,7 @@ const OrderAuth = () => {
       }
 
       // Step 4: Save package info and redirect
-      localStorage.setItem("user_package", `${order.package_type}_${order.package_level}`);
+      localStorage.setItem("user_package", packageKey);
       setAuthStep("redirecting");
 
       toast({
