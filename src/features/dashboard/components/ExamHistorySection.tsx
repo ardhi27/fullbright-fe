@@ -45,7 +45,7 @@ const ExamHistorySection = ({
               key={result.id}
               result={result}
               examType={examType}
-              onClick={() => onViewDetail(result)}
+              onViewDetail={onViewDetail}
             />
           ))}
           {results.length > maxDisplay && (
