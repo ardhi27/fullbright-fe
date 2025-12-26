@@ -61,31 +61,55 @@ const OrderAuth = () => {
 
       setOrderData(order);
 
-      // Step 2: Check if user already logged in
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        // User already logged in, just redirect
-        localStorage.setItem("user_package", `${order.package_type}_${order.package_level}`);
-        setAuthStep("redirecting");
-        
+      const packageKey = `${order.package_type}_${order.package_level}`;
+
+      const redirectToLogin = (reason?: string) => {
+        localStorage.setItem("user_package", packageKey);
         toast({
-          title: "Selamat datang kembali!",
-          description: `Mengalihkan ke dashboard ${order.package_type}...`,
+          title: "Perlu login",
+          description: reason || `Silakan login untuk mengakses dashboard ${order.package_type}.`,
+          variant: "destructive",
         });
 
-        setTimeout(() => {
-          redirectToDashboard(order.package_type);
-        }, 1500);
-        return;
+        navigate(
+          `/auth?package=${encodeURIComponent(packageKey)}&email=${encodeURIComponent(order.user_email)}&fromOrder=${encodeURIComponent(order.order_id)}`,
+          { replace: true }
+        );
+      };
+
+      // Step 2: Check if user already logged in
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        const sessionEmail = (session.user.email || "").toLowerCase();
+        const orderEmail = (order.user_email || "").toLowerCase();
+
+        // If logged in with a different email, sign out and continue with auth flow
+        if (sessionEmail && orderEmail && sessionEmail !== orderEmail) {
+          await supabase.auth.signOut();
+        } else {
+          // User already logged in, just redirect
+          localStorage.setItem("user_package", packageKey);
+          setAuthStep("redirecting");
+
+          toast({
+            title: "Selamat datang kembali!",
+            description: `Mengalihkan ke dashboard ${order.package_type}...`,
+          });
+
+          setTimeout(() => {
+            redirectToDashboard(order.package_type);
+          }, 1500);
+          return;
+        }
       }
 
       // Step 3: Auto-login user using their email
       setAuthStep("authenticating");
-      
+
       // Try to sign in with a generated password based on order
       const generatedPassword = `order_${order.order_id}_${order.user_email.split('@')[0]}`;
-      
+
       // First try to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: order.user_email,
@@ -102,7 +126,14 @@ const OrderAuth = () => {
           },
         });
 
-        if (signUpError && !signUpError.message.includes("User already registered")) {
+        // If the user already exists, we can't know their password.
+        // Redirect them to the login page instead of showing a dead-end error.
+        if (signUpError?.message?.includes("User already registered")) {
+          redirectToLogin("Akun sudah terdaftar. Silakan login untuk melanjutkan.");
+          return;
+        }
+
+        if (signUpError) {
           throw new Error("Gagal membuat akun: " + signUpError.message);
         }
 
@@ -113,7 +144,8 @@ const OrderAuth = () => {
         });
 
         if (retrySignInError) {
-          throw new Error("Gagal login otomatis. Silakan hubungi customer service.");
+          redirectToLogin("Gagal login otomatis. Silakan login secara manual.");
+          return;
         }
       }
 
