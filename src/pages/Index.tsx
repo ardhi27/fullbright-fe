@@ -1,8 +1,8 @@
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import Features from "@/components/Features";
-import ExamModes from "@/components/ExamModes";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/layout/Navbar";
+import Hero from "@/components/layout/Hero";
+import Features from "@/components/layout/Features";
+import ExamModes from "@/components/layout/ExamModes";
+import Footer from "@/components/layout/Footer";
 
 const Index = () => {
   return (

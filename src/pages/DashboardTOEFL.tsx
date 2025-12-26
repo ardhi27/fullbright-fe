@@ -1,76 +1,140 @@
-import { FlaskConical, GraduationCap } from "lucide-react";
-import { ExamDashboard } from "@/components/dashboard";
+/**
+ * DashboardTOEFL Page
+ * Halaman dashboard untuk ujian TOEFL ITP
+ */
 
-// Define TOEFL-specific data
-const packageData = {
-  STARTER: {
-    name: "TOEFL ITP LEVEL STARTER",
-    level: "STARTER",
-    description: "Cocok untuk pemula yang baru memulai persiapan TOEFL ITP",
-    features: ["Materi dasar TOEFL", "Latihan soal tingkat mudah", "Simulasi ujian pemula"],
-    targetScore: "400 - 450",
-    color: "bg-teal-500"
-  },
-  INTERMEDIATE: {
-    name: "TOEFL ITP LEVEL INTERMEDIATE",
-    level: "INTERMEDIATE",
-    description: "Untuk peserta dengan kemampuan bahasa Inggris menengah",
-    features: ["Materi tingkat menengah", "Strategi menjawab soal", "Simulasi ujian lengkap"],
-    targetScore: "450 - 550",
-    color: "bg-orange-500"
-  },
-  ADVANCE: {
-    name: "TOEFL ITP LEVEL ADVANCE",
-    level: "ADVANCE",
-    description: "Persiapan intensif untuk skor tinggi TOEFL ITP",
-    features: ["Materi tingkat lanjut", "Teknik advanced", "Simulasi ujian full"],
-    targetScore: "550 - 677",
-    color: "bg-rose-500"
-  }
-};
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
+import { BookOpen } from "lucide-react";
+import { useExamResults, type ExamResult } from "@/hooks/useExamResults";
 
-const examModes = {
-  simulasi: {
-    path: "/exam/toefl-itp/simulasi",
-    title: "Mode Simulasi",
-    description: "Latihan tanpa batas waktu. Cocok untuk belajar dan memahami format soal.",
-    icon: <FlaskConical className="w-6 h-6 text-amber-500" />,
-    timerInfo: "Tanpa Timer",
-    additionalInfo: "Bisa diulang"
-  },
-  final: {
-    path: "/exam/toefl-itp/final",
-    title: "Mode Final",
-    description: "Simulasi ujian sebenarnya dengan batas waktu seperti ujian asli.",
-    icon: <GraduationCap className="w-6 h-6 text-red-500" />,
-    timerInfo: "Dengan Timer",
-    additionalInfo: "Kondisi ujian nyata"
-  }
-};
+// Dashboard Components
+import {
+  DashboardAppHeader,
+  PackageInfoCard,
+  StatsSummaryCards,
+  ExamModeCard,
+  ExamHistorySection,
+  ExamSectionsGrid,
+  ToeflScoreRanges,
+} from "@/features/dashboard/components";
+import ExamResultDetail from "@/features/dashboard/components/ExamResultDetail";
 
-const examSections = [
-  { name: "Listening Comprehension", duration: "30-35 menit", questions: 50, icon: "🎧" },
-  { name: "Structure & Written Expression", duration: "25 menit", questions: 40, icon: "📝" },
-  { name: "Reading Comprehension", duration: "55 menit", questions: 50, icon: "📖" },
-];
-
-const scoreRanges = [
-  { score: "310-399", level: "Beginning", color: "text-muted-foreground" },
-  { score: "400-449", level: "Elementary", color: "text-amber-500" },
-  { score: "450-549", level: "Intermediate", color: "text-blue-500" },
-  { score: "550-677", level: "Advanced", color: "text-green-500" },
-];
+// Utils
+import { getPackageInfo, getExamModes, type PackageLevel } from "@/features/dashboard/utils/examData";
+import { calculateExamStats } from "@/features/dashboard/utils/scoreUtils";
 
 const DashboardTOEFL = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [packageLevel, setPackageLevel] = useState<PackageLevel>("STARTER");
+  const [selectedResult, setSelectedResult] = useState<ExamResult | null>(null);
+  const { results, loading: loadingResults } = useExamResults("toefl");
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Get package from localStorage
+    const savedPackage = localStorage.getItem("user_package") || "TOEFL_STARTER";
+    const level = savedPackage.replace("TOEFL_", "").replace("TOEFL ITP_", "").toUpperCase() as PackageLevel;
+    if (["STARTER", "INTERMEDIATE", "ADVANCE"].includes(level)) {
+      setPackageLevel(level);
+    }
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    localStorage.removeItem("user_package");
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
+  const currentPackage = getPackageInfo(packageLevel, "toefl");
+  const examModes = getExamModes();
+  const { total: totalExams, avg: avgScore, best: bestScore } = calculateExamStats(results);
+
+  // Detail View
+  if (selectedResult) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardAppHeader userEmail={user?.email} onLogout={handleLogout} />
+        <main className="container mx-auto px-4 lg:px-8 py-8">
+          <div className="max-w-5xl mx-auto">
+            <ExamResultDetail
+              result={selectedResult}
+              examType="toefl"
+              onBack={() => setSelectedResult(null)}
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // List View
   return (
-    <ExamDashboard
-      examType="toefl"
-      packageData={packageData}
-      examModes={examModes}
-      examSections={examSections}
-      scoreRanges={scoreRanges}
-      localStorageKey="TOEFL_STARTER"
-    />
+    <div className="min-h-screen bg-background">
+      <DashboardAppHeader userEmail={user?.email} onLogout={handleLogout} />
+
+      <main className="container mx-auto px-4 lg:px-8 py-8">
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Package Info */}
+          <PackageInfoCard packageInfo={currentPackage} examType="toefl" />
+
+          {/* Stats */}
+          {totalExams > 0 && (
+            <StatsSummaryCards
+              totalExams={totalExams}
+              avgScore={avgScore}
+              bestScore={bestScore}
+              examType="toefl"
+            />
+          )}
+
+          {/* Exam Modes */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              Pilih Mode Ujian
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              {examModes.map((mode) => (
+                <ExamModeCard
+                  key={mode.id}
+                  mode={mode}
+                  onClick={() => navigate(`/exam/toefl-itp/${mode.id}`)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Exam History */}
+          <ExamHistorySection
+            results={results}
+            loading={loadingResults}
+            examType="toefl"
+            onViewDetail={setSelectedResult}
+          />
+
+          {/* Exam Sections Info */}
+          <ExamSectionsGrid examType="toefl" />
+
+          {/* TOEFL Score Ranges */}
+          <ToeflScoreRanges />
+        </div>
+      </main>
+    </div>
   );
 };
 

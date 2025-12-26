@@ -22,7 +22,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import type { ExamResult } from "@/hooks/useExamResults";
 import WritingCriteriaBreakdown from "./WritingCriteriaBreakdown";
-import WritingAnswerFeedback from "@/components/WritingAnswerFeedback";
+import WritingAnswerFeedback from "@/features/exam/components/WritingAnswerFeedback";
 
 interface ExamResultDetailProps {
   result: ExamResult;
