@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import type { ExamResult } from "@/hooks/useExamResults";
 import WritingCriteriaBreakdown from "./WritingCriteriaBreakdown";
+import WritingAnswerFeedback from "@/components/WritingAnswerFeedback";
 
 interface ExamResultDetailProps {
   result: ExamResult;
@@ -373,7 +374,36 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
     );
   };
 
-  const answers = result.answers as Record<string, Record<string, string>> | null;
+  interface WritingAnswerData {
+    userAnswer?: string;
+    feedbackItems?: Array<{
+      id: number;
+      text: string;
+      category: "taskAchievement" | "coherence" | "vocabulary" | "grammar";
+      feedback: string;
+      tag: string;
+    }>;
+    vocabularyData?: {
+      words: Array<{ word: string; level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" }>;
+      distribution: Array<{ level: string; percentage: number }>;
+      errors: Array<{
+        id: number;
+        sentence: string;
+        original: string;
+        suggestion: string;
+        explanation: string;
+      }>;
+    };
+  }
+
+  interface AnswersData {
+    listening?: Record<string, string>;
+    reading?: Record<string, string>;
+    structure?: Record<string, string>;
+    writing?: WritingAnswerData;
+  }
+
+  const answers = result.answers as AnswersData | null;
 
   return (
     <div className="space-y-6">
@@ -457,8 +487,9 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
 
       {/* Tabs for Details */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${examType === "ielts" ? "grid-cols-3" : "grid-cols-2"}`}>
           <TabsTrigger value="overview">Ringkasan</TabsTrigger>
+          {examType === "ielts" && <TabsTrigger value="writing">Writing Feedback</TabsTrigger>}
           <TabsTrigger value="answers">Review Jawaban</TabsTrigger>
         </TabsList>
 
@@ -589,6 +620,28 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
             </Card>
           )}
         </TabsContent>
+
+        {/* Writing Feedback Tab - IELTS Only */}
+        {examType === "ielts" && (
+          <TabsContent value="writing" className="mt-4 space-y-6">
+            {answers?.writing ? (
+              <WritingAnswerFeedback
+                userAnswer={answers.writing.userAnswer || ""}
+                feedbackItems={answers.writing.feedbackItems || []}
+                vocabularyData={answers.writing.vocabularyData}
+              />
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <PenTool className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                  <p className="text-muted-foreground">
+                    Writing feedback tidak tersedia untuk ujian ini.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        )}
 
         <TabsContent value="answers" className="mt-4 space-y-6">
           <Card>
