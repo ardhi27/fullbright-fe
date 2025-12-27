@@ -861,12 +861,18 @@ const ExamResultDetail = ({
                   );
                 }
 
+                // Use feedbackItems from data if available
+                const finalFeedbackItems = currentTask.feedbackItems || [];
+                const finalVocabData = currentTask.vocabularyData;
+
                 return (
                   <WritingAnswerFeedback
                     userAnswer={currentTask.userAnswer || ""}
-                    feedbackItems={feedbackItems}
-                    vocabularyData={currentTask.vocabularyData}
+                    feedbackItems={finalFeedbackItems}
+                    vocabularyData={finalVocabData}
                     minimumWords={activeWritingTask === "task1" ? 150 : 250}
+                    overallFeedback={feedback?.overallFeedback}
+                    vocabularyList={feedback?.lexicalResource?.vocabulary}
                   />
                 );
               }
