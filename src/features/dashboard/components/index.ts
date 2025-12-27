@@ -19,6 +19,8 @@ export { default as ExamModeCard } from "./ExamModeCard";
 export { default as ExamListItem } from "./ExamListItem";
 export { default as ExamHistoryCard } from "./ExamHistoryCard";
 export { default as ToeflScoreCard } from "./ToeflScoreCard";
+export { default as ToeflSkillScoreSection } from "./ToeflSkillScoreSection";
+export { default as TotalTestsCompletedCard } from "./TotalTestsCompletedCard";
 
 // Sections & Grids
 export { default as ExamHistorySection } from "./ExamHistorySection";
