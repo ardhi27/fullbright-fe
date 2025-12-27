@@ -123,11 +123,27 @@ const ExamHistoryCard = ({ result, examType, onViewDetail }: ExamHistoryCardProp
         {result.section_scores && (
           <div className="mt-3 pt-3 border-t border-border">
             <div className="flex flex-wrap gap-2">
-              {Object.entries(result.section_scores).map(([section, score]) => (
-                <Badge key={section} variant="secondary" className="text-xs">
-                  {section}: {typeof score === 'number' ? (examType === 'ielts' ? score.toFixed(1) : Math.round(score)) : score}
-                </Badge>
-              ))}
+              {Object.entries(result.section_scores).map(([section, score]) => {
+                const numericScore =
+                  typeof score === "number"
+                    ? score
+                    : typeof score === "object" && score !== null && "score" in score
+                      ? (score as { score: number }).score
+                      : null;
+
+                const displayScore =
+                  numericScore === null || Number.isNaN(numericScore)
+                    ? "-"
+                    : examType === "ielts"
+                      ? numericScore.toFixed(1)
+                      : String(Math.round(numericScore));
+
+                return (
+                  <Badge key={section} variant="secondary" className="text-xs">
+                    {section}: {displayScore}
+                  </Badge>
+                );
+              })}
             </div>
           </div>
         )}
