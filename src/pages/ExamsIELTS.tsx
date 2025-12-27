@@ -57,24 +57,24 @@ const ExamsIELTS = () => {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/exams")}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Kembali
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/exams")} className="px-2 sm:px-3">
+                <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Kembali</span>
               </Button>
-              <img src={logo} alt="Fullbright Indonesia" className="h-10" />
+              <img src={logo} alt="Fullbright Indonesia" className="h-8 sm:h-10 hidden sm:block" />
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:block">
+            <div className="flex items-center gap-1 sm:gap-4">
+              <span className="text-sm text-muted-foreground hidden md:block max-w-[150px] truncate">
                 {user?.email}
               </span>
-              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
-                <LayoutDashboard className="w-4 h-4 mr-2" />
-                Riwayat Ujian
+              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="px-2 sm:px-4">
+                <LayoutDashboard className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Riwayat Ujian</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="px-2 sm:px-4">
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Logout</span>
               </Button>
             </div>
           </div>
@@ -103,7 +103,7 @@ const ExamsIELTS = () => {
           {/* Sections Overview */}
           <div className="mb-10">
             <h2 className="text-lg font-semibold mb-4">Bagian Ujian</h2>
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {ieltsExam.sections.map((section) => (
                 <div
                   key={section.name}
@@ -130,7 +130,7 @@ const ExamsIELTS = () => {
           {/* Mode Selection */}
           <div>
             <h2 className="text-lg font-semibold mb-4">Pilih Mode Ujian</h2>
-            <div className="grid sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <button
                 onClick={() => handleStartExam("simulasi")}
                 className="group relative overflow-hidden p-8 rounded-2xl border-2 border-primary/20 hover:border-primary hover:bg-primary/5 transition-all duration-300 text-left"

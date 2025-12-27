@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import logo from "@/assets/logo-wordmark.png";
-import { ArrowLeft, Clock, ChevronLeft, ChevronRight, Check, Play, Pause, Volume2, AlertCircle, Trophy, Target, BookOpen, Headphones, FileText, RotateCcw, Timer, FlaskConical, GraduationCap } from "lucide-react";
+import { ArrowLeft, Clock, ChevronLeft, ChevronRight, Check, Play, Pause, Volume2, AlertCircle, Trophy, Target, BookOpen, Headphones, FileText, RotateCcw, Timer, FlaskConical, GraduationCap, ChevronDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useExamResults } from "@/hooks/useExamResults";
 
 const listeningQuestions = [
@@ -153,6 +154,7 @@ const TOEFLExam = () => {
   const { saveResult } = useExamResults();
   
   const [currentSection, setCurrentSection] = useState<"listening" | "structure" | "reading">("listening");
+  const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Record<number, string>>>({
     listening: {},
@@ -550,17 +552,17 @@ const TOEFLExam = () => {
       <header className="border-b border-border bg-card sticky top-0 z-10">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/toefl")}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Kembali
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/toefl")} className="px-2 sm:px-3">
+                <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Kembali</span>
               </Button>
-              <img src={logo} alt="Fullbright Indonesia" className="h-6" />
+              <img src={logo} alt="Fullbright Indonesia" className="h-6 hidden md:block" />
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">TOEFL ITP</span>
+                <span className="text-sm font-medium text-muted-foreground hidden sm:inline">TOEFL ITP</span>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${
-                  isSimulasi 
-                    ? "bg-blue-500/10 text-blue-600" 
+                  isSimulasi
+                    ? "bg-blue-500/10 text-blue-600"
                     : "bg-orange-500/10 text-orange-600"
                 }`}>
                   {isSimulasi ? <FlaskConical className="w-3 h-3" /> : <GraduationCap className="w-3 h-3" />}
@@ -568,8 +570,61 @@ const TOEFLExam = () => {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 sm:gap-6">
+              {/* Mobile Section Dropdown */}
+              <div className="md:hidden">
+                <Popover open={sectionMenuOpen} onOpenChange={setSectionMenuOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-1 px-3">
+                      {currentSection === "listening" && <Headphones className="w-4 h-4" />}
+                      {currentSection === "structure" && <FileText className="w-4 h-4" />}
+                      {currentSection === "reading" && <BookOpen className="w-4 h-4" />}
+                      <span className="capitalize">{currentSection}</span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2" align="end">
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => { setCurrentSection("listening"); setCurrentQuestion(0); setSectionMenuOpen(false); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          currentSection === "listening"
+                            ? "bg-accent text-accent-foreground"
+                            : "hover:bg-secondary"
+                        }`}
+                      >
+                        <Headphones className="w-4 h-4" />
+                        Listening
+                      </button>
+                      <button
+                        onClick={() => { setCurrentSection("structure"); setCurrentQuestion(0); setSectionMenuOpen(false); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          currentSection === "structure"
+                            ? "bg-accent text-accent-foreground"
+                            : "hover:bg-secondary"
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Structure
+                      </button>
+                      <button
+                        onClick={() => { setCurrentSection("reading"); setCurrentQuestion(0); setSectionMenuOpen(false); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          currentSection === "reading"
+                            ? "bg-accent text-accent-foreground"
+                            : "hover:bg-secondary"
+                        }`}
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        Reading
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Desktop Section Tabs */}
+              <div className="hidden md:flex items-center gap-1">
                 <button
                   onClick={() => { setCurrentSection("listening"); setCurrentQuestion(0); }}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
@@ -601,10 +656,11 @@ const TOEFLExam = () => {
                   Reading
                 </button>
               </div>
+
               {isFinal && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
                   <Timer className="w-4 h-4 text-orange-600" />
-                  <span className="font-mono font-semibold text-orange-600">{formatTime(timeLeft)}</span>
+                  <span className="font-mono font-semibold text-orange-600 text-sm">{formatTime(timeLeft)}</span>
                 </div>
               )}
             </div>

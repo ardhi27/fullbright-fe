@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   ArrowLeft,
-  Calendar, 
-  Clock, 
-  FlaskConical, 
-  GraduationCap, 
+  Calendar,
+  Clock,
+  FlaskConical,
+  GraduationCap,
   Trophy,
   Target,
   Headphones,
@@ -87,14 +87,18 @@ const ieltsReadingQuestions: QuestionData[] = [
     question: "What is the author's main argument in the passage?",
     options: [
       { label: "A", text: "Technology has negative effects on society" },
-      { label: "B", text: "Digital literacy is essential for modern education" },
+      {
+        label: "B",
+        text: "Digital literacy is essential for modern education",
+      },
       { label: "C", text: "Traditional teaching methods are superior" },
       { label: "D", text: "Students should avoid using computers" },
     ],
     correctAnswer: "B",
   },
   {
-    question: "The word 'unprecedented' in paragraph 2 is closest in meaning to:",
+    question:
+      "The word 'unprecedented' in paragraph 2 is closest in meaning to:",
     options: [
       { label: "A", text: "Expected" },
       { label: "B", text: "Unparalleled" },
@@ -104,7 +108,8 @@ const ieltsReadingQuestions: QuestionData[] = [
     correctAnswer: "B",
   },
   {
-    question: "According to the passage, what percentage of schools have adopted digital tools?",
+    question:
+      "According to the passage, what percentage of schools have adopted digital tools?",
     options: [
       { label: "A", text: "50%" },
       { label: "B", text: "65%" },
@@ -160,7 +165,8 @@ const toeflStructureQuestions: QuestionData[] = [
     correctAnswer: "B",
   },
   {
-    question: "Neither the students nor the teacher _____ aware of the changes.",
+    question:
+      "Neither the students nor the teacher _____ aware of the changes.",
     options: [
       { label: "A", text: "are" },
       { label: "B", text: "was" },
@@ -234,9 +240,15 @@ const toeflReadingQuestions: QuestionData[] = [
   },
 ];
 
-const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) => {
+const ExamResultDetail = ({
+  result,
+  examType,
+  onBack,
+}: ExamResultDetailProps) => {
   const [activeTab, setActiveTab] = useState("overview");
-  const [activeWritingTask, setActiveWritingTask] = useState<"task1" | "task2">("task1");
+  const [activeWritingTask, setActiveWritingTask] = useState<"task1" | "task2">(
+    "task1"
+  );
   const isSimulasi = result.exam_mode === "simulasi";
 
   const getScoreColor = (score: number, type: "ielts" | "toefl") => {
@@ -276,18 +288,20 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
   };
 
   const renderDetailedAnswerReview = (
-    sectionName: string, 
-    userAnswers: Record<string, string> | undefined, 
+    sectionName: string,
+    userAnswers: Record<string, string> | undefined,
     questions: QuestionData[]
   ) => {
     if (!userAnswers) return null;
-    
+
     return (
       <div className="space-y-4">
         <h4 className="font-medium text-base flex items-center gap-2">
-          {sectionName === "Listening" || sectionName === "Listening Comprehension" ? (
+          {sectionName === "Listening" ||
+          sectionName === "Listening Comprehension" ? (
             <Headphones className="w-5 h-5 text-blue-500" />
-          ) : sectionName === "Reading" || sectionName === "Reading Comprehension" ? (
+          ) : sectionName === "Reading" ||
+            sectionName === "Reading Comprehension" ? (
             <BookOpen className="w-5 h-5 text-green-500" />
           ) : (
             <FileText className="w-5 h-5 text-amber-500" />
@@ -298,13 +312,13 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
           {questions.map((q, idx) => {
             const userAnswer = userAnswers[idx.toString()];
             const isCorrect = userAnswer === q.correctAnswer;
-            
+
             return (
-              <div 
+              <div
                 key={idx}
                 className={`p-4 rounded-lg border ${
-                  isCorrect 
-                    ? "bg-green-500/5 border-green-500/30" 
+                  isCorrect
+                    ? "bg-green-500/5 border-green-500/30"
                     : "bg-red-500/5 border-red-500/30"
                 }`}
               >
@@ -328,15 +342,16 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                     </Badge>
                   )}
                 </div>
-                
+
                 {/* Options */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {q.options.map((option) => {
                     const isUserChoice = userAnswer === option.label;
                     const isCorrectAnswer = q.correctAnswer === option.label;
-                    
-                    let optionClass = "p-3 rounded-lg border text-sm flex items-start gap-2 transition-colors ";
-                    
+
+                    let optionClass =
+                      "p-3 rounded-lg border text-sm flex items-start gap-2 transition-colors ";
+
                     if (isCorrectAnswer) {
                       optionClass += "bg-green-500/10 border-green-500/50 ";
                     } else if (isUserChoice && !isCorrect) {
@@ -344,25 +359,37 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                     } else {
                       optionClass += "bg-muted/30 border-border/50 ";
                     }
-                    
+
                     return (
                       <div key={option.label} className={optionClass}>
-                        <span className={`font-bold shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                          isCorrectAnswer 
-                            ? "bg-green-500 text-white" 
-                            : isUserChoice && !isCorrect 
-                              ? "bg-red-500 text-white" 
+                        <span
+                          className={`font-bold shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                            isCorrectAnswer
+                              ? "bg-green-500 text-white"
+                              : isUserChoice && !isCorrect
+                              ? "bg-red-500 text-white"
                               : "bg-muted text-muted-foreground"
-                        }`}>
+                          }`}
+                        >
                           {option.label}
                         </span>
-                        <span className={`${isCorrectAnswer ? "text-green-700 dark:text-green-400 font-medium" : ""}`}>
+                        <span
+                          className={`${
+                            isCorrectAnswer
+                              ? "text-green-700 dark:text-green-400 font-medium"
+                              : ""
+                          }`}
+                        >
                           {option.text}
                           {isCorrectAnswer && (
-                            <span className="ml-2 text-xs text-green-600">✓ Jawaban Benar</span>
+                            <span className="ml-2 text-xs text-green-600">
+                              ✓ Jawaban Benar
+                            </span>
                           )}
                           {isUserChoice && !isCorrect && (
-                            <span className="ml-2 text-xs text-red-600">← Pilihan Anda</span>
+                            <span className="ml-2 text-xs text-red-600">
+                              ← Pilihan Anda
+                            </span>
                           )}
                         </span>
                       </div>
@@ -387,7 +414,10 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
       tag: string;
     }>;
     vocabularyData?: {
-      words: Array<{ word: string; level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" }>;
+      words: Array<{
+        word: string;
+        level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+      }>;
       distribution: Array<{ level: string; percentage: number }>;
       errors: Array<{
         id: number;
@@ -419,9 +449,11 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
           Kembali
         </Button>
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            isSimulasi ? "bg-amber-500/10" : "bg-red-500/10"
-          }`}>
+          <div
+            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isSimulasi ? "bg-amber-500/10" : "bg-red-500/10"
+            }`}
+          >
             {isSimulasi ? (
               <FlaskConical className="w-4 h-4 text-amber-500" />
             ) : (
@@ -430,10 +462,15 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
           </div>
           <div>
             <h2 className="font-semibold">
-              Detail {isSimulasi ? "Simulasi" : "Final"} - {examType.toUpperCase()}
+              Detail {isSimulasi ? "Simulasi" : "Final"} -{" "}
+              {examType.toUpperCase()}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(result.completed_at), "EEEE, d MMMM yyyy 'pukul' HH:mm", { locale: id })}
+              {format(
+                new Date(result.completed_at),
+                "EEEE, d MMMM yyyy 'pukul' HH:mm",
+                { locale: id }
+              )}
             </p>
           </div>
         </div>
@@ -441,16 +478,28 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
 
       {/* Score Overview Card */}
       <Card className="overflow-hidden">
-        <div className={`h-2 ${examType === "ielts" ? "bg-primary" : "bg-accent"}`} />
+        <div
+          className={`h-2 ${examType === "ielts" ? "bg-primary" : "bg-accent"}`}
+        />
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-center md:text-left">
               <p className="text-sm text-muted-foreground mb-1">Total Skor</p>
               <div className="flex items-center gap-3">
-                <Trophy className={`w-8 h-8 ${getScoreColor(result.total_score || 0, examType)}`} />
-                <span className={`text-5xl font-bold ${getScoreColor(result.total_score || 0, examType)}`}>
-                  {examType === "ielts" 
-                    ? (result.total_score || 0).toFixed(1) 
+                <Trophy
+                  className={`w-8 h-8 ${getScoreColor(
+                    result.total_score || 0,
+                    examType
+                  )}`}
+                />
+                <span
+                  className={`text-5xl font-bold ${getScoreColor(
+                    result.total_score || 0,
+                    examType
+                  )}`}
+                >
+                  {examType === "ielts"
+                    ? (result.total_score || 0).toFixed(1)
                     : Math.round(result.total_score || 0)}
                 </span>
               </div>
@@ -460,23 +509,38 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {result.section_scores && Object.entries(result.section_scores).map(([section, score]) => (
-                <div key={section} className="text-center p-4 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground mb-1">{section}</p>
-                  <p className={`text-2xl font-bold ${getScoreColor(score as number, examType)}`}>
-                    {examType === "ielts" 
-                      ? (score as number).toFixed(1) 
-                      : Math.round(score as number)}
-                  </p>
-                </div>
-              ))}
+              {result.section_scores &&
+                Object.entries(result.section_scores).map(
+                  ([section, score]) => (
+                    <div
+                      key={section}
+                      className="text-center p-4 rounded-lg bg-muted/50"
+                    >
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {section}
+                      </p>
+                      <p
+                        className={`text-2xl font-bold ${getScoreColor(
+                          score as number,
+                          examType
+                        )}`}
+                      >
+                        {examType === "ielts"
+                          ? (score as number).toFixed(1)
+                          : Math.round(score as number)}
+                      </p>
+                    </div>
+                  )
+                )}
             </div>
           </div>
 
           <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              {format(new Date(result.completed_at), "d MMM yyyy", { locale: id })}
+              {format(new Date(result.completed_at), "d MMM yyyy", {
+                locale: id,
+              })}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
@@ -492,9 +556,15 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
 
       {/* Tabs for Details */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full ${examType === "ielts" ? "grid-cols-3" : "grid-cols-2"}`}>
+        <TabsList
+          className={`grid w-full ${
+            examType === "ielts" ? "grid-cols-3" : "grid-cols-2"
+          }`}
+        >
           <TabsTrigger value="overview">Ringkasan</TabsTrigger>
-          {examType === "ielts" && <TabsTrigger value="writing">Writing Feedback</TabsTrigger>}
+          {examType === "ielts" && (
+            <TabsTrigger value="writing">Writing Feedback</TabsTrigger>
+          )}
           <TabsTrigger value="answers">Review Jawaban</TabsTrigger>
         </TabsList>
 
@@ -513,7 +583,9 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
           {examType === "ielts" && (
             <Card>
               <CardContent className="pt-6">
-                <WritingCriteriaBreakdown sectionScores={result.section_scores || {}} />
+                <WritingCriteriaBreakdown
+                  sectionScores={result.section_scores || {}}
+                />
               </CardContent>
             </Card>
           )}
@@ -532,7 +604,10 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                       <span>Listening</span>
                     </div>
                     <span className="font-bold">
-                      Band {(result.section_scores?.Listening as number || 0).toFixed(1)}
+                      Band{" "}
+                      {(
+                        (result.section_scores?.Listening as number) || 0
+                      ).toFixed(1)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
@@ -541,7 +616,10 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                       <span>Reading</span>
                     </div>
                     <span className="font-bold">
-                      Band {(result.section_scores?.Reading as number || 0).toFixed(1)}
+                      Band{" "}
+                      {(
+                        (result.section_scores?.Reading as number) || 0
+                      ).toFixed(1)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
@@ -550,7 +628,10 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                       <span>Writing</span>
                     </div>
                     <span className="font-bold">
-                      Band {(result.section_scores?.Writing as number || 0).toFixed(1)}
+                      Band{" "}
+                      {(
+                        (result.section_scores?.Writing as number) || 0
+                      ).toFixed(1)}
                     </span>
                   </div>
                 </>
@@ -562,7 +643,9 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                       <span>Listening Comprehension</span>
                     </div>
                     <span className="font-bold">
-                      {Math.round(result.section_scores?.Listening as number || 0)}
+                      {Math.round(
+                        (result.section_scores?.Listening as number) || 0
+                      )}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
@@ -571,7 +654,9 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                       <span>Structure & Written Expression</span>
                     </div>
                     <span className="font-bold">
-                      {Math.round(result.section_scores?.Structure as number || 0)}
+                      {Math.round(
+                        (result.section_scores?.Structure as number) || 0
+                      )}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
@@ -580,7 +665,9 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                       <span>Reading Comprehension</span>
                     </div>
                     <span className="font-bold">
-                      {Math.round(result.section_scores?.Reading as number || 0)}
+                      {Math.round(
+                        (result.section_scores?.Reading as number) || 0
+                      )}
                     </span>
                   </div>
                 </>
@@ -592,17 +679,19 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
           {examType === "ielts" && answers && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Multiple Choice Review</CardTitle>
+                <CardTitle className="text-base">
+                  Multiple Choice Review
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {renderDetailedAnswerReview(
-                  "Listening", 
-                  answers?.listening, 
+                  "Listening",
+                  answers?.listening,
                   ieltsListeningQuestions
                 )}
                 {renderDetailedAnswerReview(
-                  "Reading", 
-                  answers?.reading, 
+                  "Reading",
+                  answers?.reading,
                   ieltsReadingQuestions
                 )}
               </CardContent>
@@ -613,22 +702,24 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
           {examType === "toefl" && answers && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Multiple Choice Review</CardTitle>
+                <CardTitle className="text-base">
+                  Multiple Choice Review
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {renderDetailedAnswerReview(
-                  "Listening Comprehension", 
-                  answers?.listening, 
+                  "Listening Comprehension",
+                  answers?.listening,
                   toeflListeningQuestions
                 )}
                 {renderDetailedAnswerReview(
-                  "Structure & Written Expression", 
-                  answers?.structure, 
+                  "Structure & Written Expression",
+                  answers?.structure,
                   toeflStructureQuestions
                 )}
                 {renderDetailedAnswerReview(
-                  "Reading Comprehension", 
-                  answers?.reading, 
+                  "Reading Comprehension",
+                  answers?.reading,
                   toeflReadingQuestions
                 )}
               </CardContent>
@@ -641,19 +732,25 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
           <TabsContent value="writing" className="mt-4 space-y-6">
             {/* Task Selector */}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-muted-foreground">Pilih Task:</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Pilih Task:
+              </span>
               <div className="flex gap-2">
                 <Button
-                  variant={activeWritingTask === "task1" ? "default" : "outline"}
+                  variant={
+                    activeWritingTask === "task1" ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setActiveWritingTask("task1")}
                   className="min-w-[140px]"
                 >
                   <FileText className="w-4 h-4 mr-2" />
-                  Writing Task 1
+                  Academic Writing Task 1
                 </Button>
                 <Button
-                  variant={activeWritingTask === "task2" ? "default" : "outline"}
+                  variant={
+                    activeWritingTask === "task2" ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setActiveWritingTask("task2")}
                   className="min-w-[140px]"
@@ -667,8 +764,8 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
             {/* Task Description */}
             <div className="p-4 rounded-lg bg-muted/50 border border-border">
               <h4 className="font-medium text-sm mb-1">
-                {activeWritingTask === "task1" 
-                  ? "Academic Writing Task 1" 
+                {activeWritingTask === "task1"
+                  ? "Academic Writing Task 1"
                   : "Writing Task 2 (Essay)"}
               </h4>
               <p className="text-xs text-muted-foreground">
@@ -680,10 +777,11 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
 
             {/* Writing Feedback Content */}
             {(() => {
-              const currentTask = activeWritingTask === "task1" 
-                ? (answers?.writingTask1 || answers?.writing)
-                : answers?.writingTask2;
-              
+              const currentTask =
+                activeWritingTask === "task1"
+                  ? answers?.writingTask1 || answers?.writing
+                  : answers?.writingTask2;
+
               if (currentTask) {
                 return (
                   <WritingAnswerFeedback
@@ -694,13 +792,13 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
                   />
                 );
               }
-              
+
               return (
                 <Card>
                   <CardContent className="py-12 text-center">
                     <PenTool className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
                     <p className="text-muted-foreground">
-                      {activeWritingTask === "task1" 
+                      {activeWritingTask === "task1"
                         ? "Writing Task 1 feedback tidak tersedia untuk ujian ini."
                         : "Writing Task 2 feedback tidak tersedia untuk ujian ini."}
                     </p>
@@ -720,31 +818,31 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
               {examType === "ielts" ? (
                 <>
                   {renderDetailedAnswerReview(
-                    "Listening", 
-                    answers?.listening, 
+                    "Listening",
+                    answers?.listening,
                     ieltsListeningQuestions
                   )}
                   {renderDetailedAnswerReview(
-                    "Reading", 
-                    answers?.reading, 
+                    "Reading",
+                    answers?.reading,
                     ieltsReadingQuestions
                   )}
                 </>
               ) : (
                 <>
                   {renderDetailedAnswerReview(
-                    "Listening Comprehension", 
-                    answers?.listening, 
+                    "Listening Comprehension",
+                    answers?.listening,
                     toeflListeningQuestions
                   )}
                   {renderDetailedAnswerReview(
-                    "Structure & Written Expression", 
-                    answers?.structure, 
+                    "Structure & Written Expression",
+                    answers?.structure,
                     toeflStructureQuestions
                   )}
                   {renderDetailedAnswerReview(
-                    "Reading Comprehension", 
-                    answers?.reading, 
+                    "Reading Comprehension",
+                    answers?.reading,
                     toeflReadingQuestions
                   )}
                 </>
