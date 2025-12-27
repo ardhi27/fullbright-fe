@@ -511,26 +511,33 @@ const ExamResultDetail = ({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {result.section_scores &&
                 Object.entries(result.section_scores).map(
-                  ([section, score]) => (
-                    <div
-                      key={section}
-                      className="text-center p-4 rounded-lg bg-muted/50"
-                    >
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {section}
-                      </p>
-                      <p
-                        className={`text-2xl font-bold ${getScoreColor(
-                          score as number,
-                          examType
-                        )}`}
+                  ([section, score]) => {
+                    // Handle writing section which is an object with {score, task1, task2}
+                    const numericScore = typeof score === 'object' && score !== null && 'score' in score
+                      ? (score as { score: number }).score
+                      : score as number;
+                    
+                    return (
+                      <div
+                        key={section}
+                        className="text-center p-4 rounded-lg bg-muted/50"
                       >
-                        {examType === "ielts"
-                          ? (score as number).toFixed(1)
-                          : Math.round(score as number)}
-                      </p>
-                    </div>
-                  )
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {section}
+                        </p>
+                        <p
+                          className={`text-2xl font-bold ${getScoreColor(
+                            numericScore,
+                            examType
+                          )}`}
+                        >
+                          {examType === "ielts"
+                            ? numericScore.toFixed(1)
+                            : Math.round(numericScore)}
+                        </p>
+                      </div>
+                    );
+                  }
                 )}
             </div>
           </div>
@@ -629,9 +636,13 @@ const ExamResultDetail = ({
                     </div>
                     <span className="font-bold">
                       Band{" "}
-                      {(
-                        (result.section_scores?.Writing as number) || 0
-                      ).toFixed(1)}
+                      {(() => {
+                        const writing = result.section_scores?.Writing;
+                        const score = typeof writing === 'object' && writing !== null && 'score' in writing
+                          ? (writing as { score: number }).score
+                          : (writing as number) || 0;
+                        return score.toFixed(1);
+                      })()}
                     </span>
                   </div>
                 </>
