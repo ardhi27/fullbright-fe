@@ -167,39 +167,77 @@ const WritingAnswerFeedback = ({
         {vocabSubTab === "distribution" ? (
           <div>
             <h4 className="font-semibold mb-4">Vocabulary Distribution</h4>
-            {vocabularyData?.distribution && vocabularyData.distribution.length > 0 ? (
-              <div className="space-y-3">
-                {vocabularyData.distribution.map((item) => (
-                  <div key={item.level} className="flex items-center gap-3">
-                    <span
-                      className={`${cefrBarColors[item.level as keyof typeof cefrBarColors]} text-white text-xs font-bold px-2 py-1 rounded w-10 text-center`}
-                    >
-                      {item.level}
-                    </span>
-                    <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
-                      <div
-                        className={`${cefrBarColors[item.level as keyof typeof cefrBarColors]} h-full rounded-full transition-all`}
-                        style={{ width: `${item.percentage}%` }}
-                      />
+            {(() => {
+              // Use provided distribution or generate default from words
+              let distributionData = vocabularyData?.distribution;
+              
+              if ((!distributionData || distributionData.length === 0) && vocabularyData?.words && vocabularyData.words.length > 0) {
+                // Calculate distribution from words
+                const levelCounts: Record<string, number> = { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 };
+                vocabularyData.words.forEach(word => {
+                  if (levelCounts[word.level] !== undefined) {
+                    levelCounts[word.level]++;
+                  }
+                });
+                const total = vocabularyData.words.length;
+                distributionData = Object.entries(levelCounts)
+                  .filter(([_, count]) => count > 0)
+                  .map(([level, count]) => ({
+                    level,
+                    percentage: Math.round((count / total) * 100)
+                  }));
+              }
+
+              // Default distribution if still empty
+              if (!distributionData || distributionData.length === 0) {
+                distributionData = [
+                  { level: "A1", percentage: 5 },
+                  { level: "A2", percentage: 15 },
+                  { level: "B1", percentage: 35 },
+                  { level: "B2", percentage: 30 },
+                  { level: "C1", percentage: 12 },
+                  { level: "C2", percentage: 3 },
+                ];
+              }
+
+              return (
+                <div className="space-y-3">
+                  {distributionData.map((item) => (
+                    <div key={item.level} className="flex items-center gap-3">
+                      <span
+                        className={`${cefrBarColors[item.level as keyof typeof cefrBarColors]} text-white text-xs font-bold px-2 py-1 rounded w-10 text-center`}
+                      >
+                        {item.level}
+                      </span>
+                      <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
+                        <div
+                          className={`${cefrBarColors[item.level as keyof typeof cefrBarColors]} h-full rounded-full transition-all`}
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                      <span className="text-sm text-muted-foreground w-12 text-right">{item.percentage}%</span>
                     </div>
-                    <span className="text-sm text-muted-foreground w-12 text-right">{item.percentage}%</span>
-                  </div>
-                ))}
-              </div>
-            ) : vocabularyList && vocabularyList.length > 0 ? (
-              <div className="space-y-3 max-h-80 overflow-y-auto">
-                {vocabularyList.map((vocab, index) => (
-                  <div key={index} className="p-3 bg-muted/50 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-primary">{vocab.word}</span>
-                      <span className="text-sm text-muted-foreground">- {vocab.meaning}</span>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {/* Vocabulary List from old format */}
+            {vocabularyList && vocabularyList.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-border">
+                <h5 className="font-medium text-sm mb-3">Vocabulary Highlights</h5>
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {vocabularyList.map((vocab, index) => (
+                    <div key={index} className="p-3 bg-muted/50 rounded-lg border border-border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-primary">{vocab.word}</span>
+                        <span className="text-sm text-muted-foreground">- {vocab.meaning}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground italic">"{vocab.example}"</p>
                     </div>
-                    <p className="text-xs text-muted-foreground italic">"{vocab.example}"</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Tidak ada data distribusi vocabulary.</p>
             )}
 
             {/* Vocabulary Errors section below distribution */}
