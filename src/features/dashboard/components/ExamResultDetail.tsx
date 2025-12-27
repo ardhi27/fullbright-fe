@@ -777,16 +777,94 @@ const ExamResultDetail = ({
 
             {/* Writing Feedback Content */}
             {(() => {
+              // Handle both data structures: writing.task1/task2 OR writingTask1/writingTask2
+              const writingData = answers?.writing as { task1?: any; task2?: any } | undefined;
               const currentTask =
                 activeWritingTask === "task1"
-                  ? answers?.writingTask1 || answers?.writing
-                  : answers?.writingTask2;
+                  ? answers?.writingTask1 || writingData?.task1
+                  : answers?.writingTask2 || writingData?.task2;
 
-              if (currentTask) {
+              if (currentTask && (currentTask.userAnswer || currentTask.feedback)) {
+                // Transform the feedback structure if it's in the new format
+                const feedbackItems = currentTask.feedbackItems || [];
+                const feedback = currentTask.feedback;
+
+                // If feedback exists in the new structure, create feedbackItems from it
+                if (feedback && feedbackItems.length === 0) {
+                  const transformedItems: Array<{
+                    id: number;
+                    text: string;
+                    category: "taskAchievement" | "coherence" | "vocabulary" | "grammar";
+                    feedback: string;
+                    tag: string;
+                  }> = [];
+                  if (feedback.taskAchievement) {
+                    transformedItems.push({
+                      id: 1,
+                      text: "",
+                      category: "taskAchievement",
+                      feedback: feedback.taskAchievement.comment,
+                      tag: `Score: ${feedback.taskAchievement.score}`,
+                    });
+                  }
+                  if (feedback.coherenceCohesion) {
+                    transformedItems.push({
+                      id: 2,
+                      text: "",
+                      category: "coherence",
+                      feedback: feedback.coherenceCohesion.comment,
+                      tag: `Score: ${feedback.coherenceCohesion.score}`,
+                    });
+                  }
+                  if (feedback.lexicalResource) {
+                    transformedItems.push({
+                      id: 3,
+                      text: "",
+                      category: "vocabulary",
+                      feedback: feedback.lexicalResource.comment,
+                      tag: `Score: ${feedback.lexicalResource.score}`,
+                    });
+                  }
+                  if (feedback.grammaticalRange) {
+                    transformedItems.push({
+                      id: 4,
+                      text: "",
+                      category: "grammar",
+                      feedback: feedback.grammaticalRange.comment,
+                      tag: `Score: ${feedback.grammaticalRange.score}`,
+                    });
+                  }
+
+                  // Create vocabulary data from lexicalResource if available
+                  const vocabData = feedback.lexicalResource?.vocabulary
+                    ? {
+                        words: feedback.lexicalResource.vocabulary.map(
+                          (v: { word: string }) => ({
+                            word: v.word,
+                            level: "B2" as const,
+                          })
+                        ),
+                        distribution: [],
+                        errors: [],
+                      }
+                    : undefined;
+
+                  return (
+                    <WritingAnswerFeedback
+                      userAnswer={currentTask.userAnswer || ""}
+                      feedbackItems={transformedItems}
+                      vocabularyData={vocabData}
+                      minimumWords={activeWritingTask === "task1" ? 150 : 250}
+                      overallFeedback={feedback.overallFeedback}
+                      vocabularyList={feedback.lexicalResource?.vocabulary}
+                    />
+                  );
+                }
+
                 return (
                   <WritingAnswerFeedback
                     userAnswer={currentTask.userAnswer || ""}
-                    feedbackItems={currentTask.feedbackItems || []}
+                    feedbackItems={feedbackItems}
                     vocabularyData={currentTask.vocabularyData}
                     minimumWords={activeWritingTask === "task1" ? 150 : 250}
                   />

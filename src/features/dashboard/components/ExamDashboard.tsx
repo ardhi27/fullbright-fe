@@ -8,12 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LogOut, BookOpen, History, FileText } from "lucide-react";
 import logo from "@/assets/logo-wordmark.png";
 import { useExamResults, type ExamResult } from "@/hooks/useExamResults";
-import ExamHistoryCard from "@/components/dashboard/ExamHistoryCard";
-import ExamResultDetail from "@/components/dashboard/ExamResultDetail";
-import PackageInfoCard from "@/components/dashboard/PackageInfoCard";
-import ExamModesCard from "@/components/dashboard/ExamModesCard";
-import ExamSectionsInfo from "@/components/dashboard/ExamSectionsInfo";
-import ScoreRangeInfo from "@/components/dashboard/ScoreRangeInfo";
+import ExamHistoryCard from "@/features/dashboard/components/ExamHistoryCard";
+import ExamResultDetail from "@/features/dashboard/components/ExamResultDetail";
+import PackageInfoCard from "@/features/dashboard/components/PackageInfoCard";
+import ExamModesCard from "@/features/dashboard/components/ExamModesCard";
+import ExamSectionsInfo from "@/features/dashboard/components/ExamSectionsInfo";
+import ScoreRangeInfo from "@/features/dashboard/components/ScoreRangeInfo";
 
 type PackageLevel = "STARTER" | "INTERMEDIATE" | "ADVANCE";
 
@@ -149,7 +149,7 @@ const ExamDashboard = ({
           ) : (
             <>
               {/* Package Info Card */}
-              <PackageInfoCard packageInfo={currentPackage} />
+              <PackageInfoCard packageInfo={currentPackage} examType={examType} />
 
               {/* Stats Cards */}
               {totalExams > 0 && (
