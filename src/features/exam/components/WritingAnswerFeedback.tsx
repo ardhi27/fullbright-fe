@@ -105,12 +105,16 @@ interface VocabularyData {
  * @property {WritingFeedback[]} feedbackItems - Array feedback untuk di-highlight dalam jawaban
  * @property {VocabularyData} [vocabularyData] - Data vocabulary opsional untuk analisis CEFR
  * @property {number} [minimumWords] - Minimum word count requirement (default: 150)
+ * @property {string} [overallFeedback] - Overall feedback message
+ * @property {Array<{word: string; meaning: string; example: string}>} [vocabularyList] - Vocabulary list with meanings
  */
 interface WritingAnswerFeedbackProps {
   userAnswer: string;
   feedbackItems: WritingFeedback[];
   vocabularyData?: VocabularyData;
   minimumWords?: number;
+  overallFeedback?: string;
+  vocabularyList?: Array<{ word: string; meaning: string; example: string }>;
 }
 
 const categoryNames = {
@@ -161,9 +165,16 @@ const cefrBarColors = {
   C2: "bg-red-500",
 };
 
-const WritingAnswerFeedback = ({ userAnswer, feedbackItems, vocabularyData, minimumWords = 150 }: WritingAnswerFeedbackProps) => {
+const WritingAnswerFeedback = ({ 
+  userAnswer, 
+  feedbackItems, 
+  vocabularyData, 
+  minimumWords = 150,
+  overallFeedback,
+  vocabularyList 
+}: WritingAnswerFeedbackProps) => {
   const [activeCategory, setActiveCategory] = useState<keyof typeof categoryNames>("taskAchievement");
-  const [vocabSubTab, setVocabSubTab] = useState<"distribution" | "errors">("distribution");
+  const [vocabSubTab, setVocabSubTab] = useState<"distribution" | "errors" | "list">("distribution");
 
   const categories = Object.keys(categoryNames) as Array<keyof typeof categoryNames>;
 
@@ -203,6 +214,26 @@ const WritingAnswerFeedback = ({ userAnswer, feedbackItems, vocabularyData, mini
   };
 
   const renderVocabularyContent = () => {
+    // If we have vocabularyList (from new data format), show that
+    if (vocabularyList && vocabularyList.length > 0) {
+      return (
+        <div>
+          <h4 className="font-semibold mb-4">Vocabulary yang Digunakan</h4>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {vocabularyList.map((vocab, index) => (
+              <div key={index} className="p-3 bg-secondary/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-primary">{vocab.word}</span>
+                  <span className="text-sm text-muted-foreground">- {vocab.meaning}</span>
+                </div>
+                <p className="text-xs text-muted-foreground italic">"{vocab.example}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     if (!vocabularyData) return null;
 
     return (
@@ -367,8 +398,16 @@ const WritingAnswerFeedback = ({ userAnswer, feedbackItems, vocabularyData, mini
             ))}
           </div>
 
+          {/* Overall Feedback */}
+          {overallFeedback && (
+            <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+              <h4 className="font-semibold text-sm mb-2 text-primary">Overall Feedback</h4>
+              <p className="text-sm text-foreground">{overallFeedback}</p>
+            </div>
+          )}
+
           {/* Vocabulary special content */}
-          {activeCategory === "vocabulary" && vocabularyData ? (
+          {activeCategory === "vocabulary" && (vocabularyData || vocabularyList) ? (
             renderVocabularyContent()
           ) : (
             /* Regular feedback items */
@@ -393,7 +432,7 @@ const WritingAnswerFeedback = ({ userAnswer, feedbackItems, vocabularyData, mini
                         {index + 1}
                       </span>
                       <div className="flex-1">
-                        <p className="text-sm text-muted-foreground italic">&quot;{item.text}&quot;</p>
+                        {item.text && <p className="text-sm text-muted-foreground italic">&quot;{item.text}&quot;</p>}
                       </div>
                     </div>
                     <p className="text-sm text-foreground pl-8">{item.feedback}</p>
