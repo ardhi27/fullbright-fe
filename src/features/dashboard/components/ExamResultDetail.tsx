@@ -23,6 +23,8 @@ import { id } from "date-fns/locale";
 import type { ExamResult } from "@/hooks/useExamResults";
 import WritingCriteriaBreakdown from "./WritingCriteriaBreakdown";
 import WritingAnswerFeedback from "@/features/exam/components/WritingAnswerFeedback";
+import ToeflSkillScoreSection from "./ToeflSkillScoreSection";
+import TotalTestsCompletedCard from "./TotalTestsCompletedCard";
 
 interface ExamResultDetailProps {
   result: ExamResult;
@@ -497,6 +499,16 @@ const ExamResultDetail = ({ result, examType, onBack }: ExamResultDetailProps) =
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
+          {/* TOEFL Skill Score Section with Donut Charts */}
+          {examType === "toefl" && (
+            <div className="grid md:grid-cols-2 gap-4">
+              <ToeflSkillScoreSection 
+                sectionScores={result.section_scores as { Listening?: number; Reading?: number; Structure?: number } || {}} 
+              />
+              <TotalTestsCompletedCard totalTests={1} examType="toefl" />
+            </div>
+          )}
+
           {/* IELTS Criteria Breakdown with Accordion */}
           {examType === "ielts" && (
             <Card>
