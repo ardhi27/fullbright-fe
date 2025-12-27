@@ -21,8 +21,13 @@ export const getExamSections = (examType: ExamType): ExamSectionInfo[] => {
     return [
       { name: "Listening", duration: "30 menit", questions: 40, icon: "🎧" },
       { name: "Reading", duration: "60 menit", questions: 40, icon: "📖" },
-      { name: "Writing", duration: "60 menit", questions: 2, icon: "✍️", questionLabel: "bagian" },
-      { name: "Speaking", duration: "11-14 menit", questions: 3, icon: "🗣️", questionLabel: "bagian" },
+      {
+        name: "Writing",
+        duration: "60 menit",
+        questions: 2,
+        icon: "✍️",
+        questionLabel: "bagian",
+      },
     ];
   } else {
     return [
@@ -69,7 +74,12 @@ export const getPackageInfo = (
       name: "Advance Package",
       level: "ADVANCE",
       color: "bg-amber-500",
-      features: ["Complete Practice", "AI Feedback", "1-on-1 Review", "Unlimited Access"],
+      features: [
+        "Complete Practice",
+        "AI Feedback",
+        "1-on-1 Review",
+        "Unlimited Access",
+      ],
       targetScore: examType === "ielts" ? "7.0+" : "550+",
     },
   };
@@ -103,7 +113,7 @@ export const getExamModes = (): ExamModeInfo[] => [
   {
     id: "final",
     title: "Mode Final",
-    description: "Simulasi ujian seperti kondisi sesungguhnya",
+    description: "Ujian seperti kondisi sesungguhnya",
     features: ["Dengan timer", "Kondisi real", "Skor akhir"],
     buttonText: "Mulai Ujian Final",
     iconColor: "text-primary",
@@ -121,8 +131,20 @@ export interface ToeflScoreRange {
 }
 
 export const getToeflScoreRanges = (): ToeflScoreRange[] => [
-  { range: "550-677", level: "Advanced", color: "bg-green-500/10 text-green-500" },
-  { range: "450-549", level: "High Intermediate", color: "bg-blue-500/10 text-blue-500" },
-  { range: "350-449", level: "Low Intermediate", color: "bg-amber-500/10 text-amber-500" },
+  {
+    range: "550-677",
+    level: "Advanced",
+    color: "bg-green-500/10 text-green-500",
+  },
+  {
+    range: "450-549",
+    level: "High Intermediate",
+    color: "bg-blue-500/10 text-blue-500",
+  },
+  {
+    range: "350-449",
+    level: "Low Intermediate",
+    color: "bg-amber-500/10 text-amber-500",
+  },
   { range: "310-349", level: "Beginning", color: "bg-red-500/10 text-red-500" },
 ];

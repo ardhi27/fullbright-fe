@@ -19,7 +19,7 @@ const ExamSectionsGrid = ({ examType }: ExamSectionsGridProps) => {
       <h2 className="text-xl font-semibold mb-4">
         Struktur Ujian {examType === "ielts" ? "IELTS" : "TOEFL ITP"}
       </h2>
-      <div className={`grid gap-4 ${examType === "ielts" ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-3"}`}>
+      <div className={`grid gap-4 ${examType === "ielts" ? "grid-cols-1 md:grid-cols-3" : "grid-cols-3"}`}>
         {sections.map((section) => (
           <Card key={section.name} className="p-4">
             <div className="text-2xl mb-2">{section.icon}</div>
