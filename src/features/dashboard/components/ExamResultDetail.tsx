@@ -788,14 +788,47 @@ const ExamResultDetail = ({
 
             {/* Writing Feedback Content */}
             {(() => {
-              // Handle both data structures: writing.task1/task2 OR writingTask1/writingTask2
-              const writingData = answers?.writing as { task1?: any; task2?: any } | undefined;
-              const currentTask =
-                activeWritingTask === "task1"
-                  ? answers?.writingTask1 || writingData?.task1
-                  : answers?.writingTask2 || writingData?.task2;
+              // Sumber data writing bisa berada di answers ATAU section_scores (umumnya mode final)
+              const writingData = (answers as any)?.writing as
+                | { task1?: any; task2?: any }
+                | undefined;
 
-              if (currentTask && (currentTask.userAnswer || currentTask.feedback)) {
+              const sectionScores = result.section_scores as any;
+              const writingFromSectionScores =
+                sectionScores?.Writing ?? sectionScores?.writing;
+
+              const taskFromAnswers =
+                activeWritingTask === "task1"
+                  ? (answers as any)?.writingTask1 ??
+                    writingData?.task1 ??
+                    (answers as any)?.writing_task1
+                  : (answers as any)?.writingTask2 ??
+                    writingData?.task2 ??
+                    (answers as any)?.writing_task2;
+
+              const taskFromSectionScores =
+                activeWritingTask === "task1"
+                  ? writingFromSectionScores?.task1 ??
+                    writingFromSectionScores?.writingTask1 ??
+                    writingFromSectionScores?.writing_task1
+                  : writingFromSectionScores?.task2 ??
+                    writingFromSectionScores?.writingTask2 ??
+                    writingFromSectionScores?.writing_task2;
+
+              const currentTaskRaw = taskFromAnswers ?? taskFromSectionScores;
+              const currentTask =
+                typeof currentTaskRaw === "string"
+                  ? { userAnswer: currentTaskRaw }
+                  : currentTaskRaw;
+
+              const hasWritingContent =
+                !!currentTask &&
+                (!!currentTask.userAnswer ||
+                  !!currentTask.feedback ||
+                  (Array.isArray(currentTask.feedbackItems) &&
+                    currentTask.feedbackItems.length > 0));
+
+              if (hasWritingContent) {
                 // Transform the feedback structure if it's in the new format
                 const feedbackItems = currentTask.feedbackItems || [];
                 const feedback = currentTask.feedback;
