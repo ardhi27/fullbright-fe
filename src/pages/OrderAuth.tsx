@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-wordmark.png";
 
 interface OrderData {
   order_id: string;

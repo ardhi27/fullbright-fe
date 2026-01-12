@@ -27,3 +27,8 @@ export { default as ExamHistorySection } from "./ExamHistorySection";
 export { default as ExamSectionsGrid } from "./ExamSectionsGrid";
 export { default as SectionResults } from "./SectionResults";
 export { default as ToeflScoreRanges } from "./ToeflScoreRanges";
+
+// Simulation Topic History
+export { default as SimulationTopicHistoryCard } from "./SimulationTopicHistoryCard";
+export { default as SimulationTopicHistorySection } from "./SimulationTopicHistorySection";
+export { default as SimulationTopicResultDetail } from "./SimulationTopicResultDetail";

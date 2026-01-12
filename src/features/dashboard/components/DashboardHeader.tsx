@@ -9,7 +9,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-wordmark.png";
 
 interface DashboardHeaderProps {
   onBack: () => void;

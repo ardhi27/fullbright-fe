@@ -481,19 +481,20 @@ const ExamResultDetail = ({
         <div
           className={`h-2 ${examType === "ielts" ? "bg-primary" : "bg-accent"}`}
         />
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="text-center md:text-left">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col items-center gap-6">
+            {/* Total Score - Center aligned */}
+            <div className="text-center w-full">
               <p className="text-sm text-muted-foreground mb-1">Total Skor</p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center gap-3">
                 <Trophy
-                  className={`w-8 h-8 ${getScoreColor(
+                  className={`w-6 h-6 sm:w-8 sm:h-8 ${getScoreColor(
                     result.total_score || 0,
                     examType
                   )}`}
                 />
                 <span
-                  className={`text-5xl font-bold ${getScoreColor(
+                  className={`text-4xl sm:text-5xl font-bold ${getScoreColor(
                     result.total_score || 0,
                     examType
                   )}`}
@@ -508,7 +509,8 @@ const ExamResultDetail = ({
               </Badge>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Section Scores - Responsive grid */}
+            <div className="w-full grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
               {result.section_scores &&
                 Object.entries(result.section_scores).map(
                   ([section, score]) => {
@@ -520,13 +522,13 @@ const ExamResultDetail = ({
                     return (
                       <div
                         key={section}
-                        className="text-center p-4 rounded-lg bg-muted/50"
+                        className="text-center p-3 sm:p-4 rounded-lg bg-muted/50"
                       >
-                        <p className="text-xs text-muted-foreground mb-1">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mb-1 truncate">
                           {section}
                         </p>
                         <p
-                          className={`text-2xl font-bold ${getScoreColor(
+                          className={`text-xl sm:text-2xl font-bold ${getScoreColor(
                             numericScore,
                             examType
                           )}`}
@@ -542,7 +544,7 @@ const ExamResultDetail = ({
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm text-muted-foreground">
+          <div className="mt-4 sm:mt-6 pt-4 border-t border-border flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               {format(new Date(result.completed_at), "d MMM yyyy", {
@@ -741,22 +743,22 @@ const ExamResultDetail = ({
         {/* Writing Feedback Tab - IELTS Only */}
         {examType === "ielts" && (
           <TabsContent value="writing" className="mt-4 space-y-6">
-            {/* Task Selector */}
-            <div className="flex items-center gap-3">
+            {/* Task Selector - Responsive */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <span className="text-sm font-medium text-muted-foreground">
                 Pilih Task:
               </span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   variant={
                     activeWritingTask === "task1" ? "default" : "outline"
                   }
                   size="sm"
                   onClick={() => setActiveWritingTask("task1")}
-                  className="min-w-[140px]"
+                  className="flex-1 sm:flex-none sm:min-w-[140px] text-xs sm:text-sm"
                 >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Academic Writing Task 1
+                  <FileText className="w-4 h-4 mr-1 sm:mr-2 shrink-0" />
+                  <span className="truncate">Academic Writing Task 1</span>
                 </Button>
                 <Button
                   variant={
@@ -764,10 +766,10 @@ const ExamResultDetail = ({
                   }
                   size="sm"
                   onClick={() => setActiveWritingTask("task2")}
-                  className="min-w-[140px]"
+                  className="flex-1 sm:flex-none sm:min-w-[140px] text-xs sm:text-sm"
                 >
-                  <PenTool className="w-4 h-4 mr-2" />
-                  Writing Task 2
+                  <PenTool className="w-4 h-4 mr-1 sm:mr-2 shrink-0" />
+                  <span className="truncate">Writing Task 2</span>
                 </Button>
               </div>
             </div>
@@ -788,6 +790,8 @@ const ExamResultDetail = ({
 
             {/* Writing Feedback Content */}
             {(() => {
+              // Check if we should use sample data
+              const shouldUseSampleData = !answers || Object.keys(answers).length === 0;
               // Sumber data writing bisa berada di answers ATAU section_scores (umumnya mode final)
               const writingData = (answers as any)?.writing as
                 | { task1?: any; task2?: any }
@@ -827,6 +831,16 @@ const ExamResultDetail = ({
                   !!currentTask.feedback ||
                   (Array.isArray(currentTask.feedbackItems) &&
                     currentTask.feedbackItems.length > 0));
+
+              // If no writing content, show sample data for demo purposes
+              if (!hasWritingContent) {
+                return (
+                  <WritingAnswerFeedback
+                    useSampleData={true}
+                    minimumWords={activeWritingTask === "task1" ? 150 : 250}
+                  />
+                );
+              }
 
               if (hasWritingContent) {
                 // Transform the feedback structure if it's in the new format
@@ -901,6 +915,7 @@ const ExamResultDetail = ({
                       minimumWords={activeWritingTask === "task1" ? 150 : 250}
                       overallFeedback={feedback.overallFeedback}
                       vocabularyList={feedback.lexicalResource?.vocabulary}
+                      summaryFeedback={feedback.summaryFeedback || currentTask.summaryFeedback}
                     />
                   );
                 }
@@ -917,21 +932,17 @@ const ExamResultDetail = ({
                     minimumWords={activeWritingTask === "task1" ? 150 : 250}
                     overallFeedback={feedback?.overallFeedback}
                     vocabularyList={feedback?.lexicalResource?.vocabulary}
+                    summaryFeedback={feedback?.summaryFeedback || currentTask.summaryFeedback}
                   />
                 );
               }
 
+              // Fallback to sample data (should not reach here normally)
               return (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <PenTool className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-                    <p className="text-muted-foreground">
-                      {activeWritingTask === "task1"
-                        ? "Writing Task 1 feedback tidak tersedia untuk ujian ini."
-                        : "Writing Task 2 feedback tidak tersedia untuk ujian ini."}
-                    </p>
-                  </CardContent>
-                </Card>
+                <WritingAnswerFeedback
+                  useSampleData={true}
+                  minimumWords={activeWritingTask === "task1" ? 150 : 250}
+                />
               );
             })()}
           </TabsContent>

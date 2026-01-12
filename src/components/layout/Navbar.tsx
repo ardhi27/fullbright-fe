@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-wordmark.png";
 import { Button } from "@/components/ui/button";
 
 const Navbar = () => {

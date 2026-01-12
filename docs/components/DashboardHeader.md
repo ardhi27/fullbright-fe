@@ -52,4 +52,4 @@ const MyPage = () => {
 
 - `@/components/ui/button`
 - `lucide-react` (ArrowLeft icon)
-- `@/assets/logo.png`
+- `@/assets/logo-wordmark.png`

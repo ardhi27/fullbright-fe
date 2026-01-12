@@ -5,14 +5,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import {
   CheckCircle2,
   Link2,
   BookText,
   SpellCheck,
+  Target,
+  Lightbulb,
+  TrendingUp,
+  AlertCircle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SubCriterion {
   name: string;
@@ -28,142 +32,97 @@ interface CriterionDetail {
   examinerPerspective: string;
   subCriteria: SubCriterion[];
   icon: React.ReactNode;
-  color: string;
-  bgColor: string;
 }
 
 interface WritingCriteriaBreakdownProps {
   sectionScores: Record<string, unknown>;
 }
 
-// Simple Radar Chart Component
-const RadarChart = ({ data, color }: { data: SubCriterion[]; color: string }) => {
-  const centerX = 140;
-  const centerY = 150; // Moved down to give space for top labels
-  const maxRadius = 80;
-  const levels = 5;
-  const angleStep = (2 * Math.PI) / data.length;
-  const startAngle = -Math.PI / 2; // Start from top
+// Score level indicator
+const getScoreLevel = (score: number): { label: string; color: string } => {
+  if (score >= 8) return { label: "Expert", color: "text-emerald-600" };
+  if (score >= 7) return { label: "Good", color: "text-blue-600" };
+  if (score >= 6) return { label: "Competent", color: "text-amber-600" };
+  if (score >= 5) return { label: "Modest", color: "text-orange-600" };
+  return { label: "Limited", color: "text-red-600" };
+};
 
-  // Calculate points for each data item
-  const points = data.map((item, index) => {
-    const angle = startAngle + index * angleStep;
-    const radius = (item.score / 9) * maxRadius;
-    return {
-      x: centerX + radius * Math.cos(angle),
-      y: centerY + radius * Math.sin(angle),
-      labelX: centerX + (maxRadius + 35) * Math.cos(angle),
-      labelY: centerY + (maxRadius + 35) * Math.sin(angle),
-      score: item.score,
-      name: item.name,
-    };
-  });
-
-  // Create polygon path
-  const polygonPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
-
-  // Create grid lines
-  const gridLines = [];
-  for (let level = 1; level <= levels; level++) {
-    const radius = (level / levels) * maxRadius;
-    const levelPoints = data.map((_, index) => {
-      const angle = startAngle + index * angleStep;
-      return {
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle),
-      };
-    });
-    const path = levelPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
-    gridLines.push(path);
-  }
-
-  // Axis lines from center to each point
-  const axisLines = data.map((_, index) => {
-    const angle = startAngle + index * angleStep;
-    return {
-      x2: centerX + maxRadius * Math.cos(angle),
-      y2: centerY + maxRadius * Math.sin(angle),
-    };
-  });
-
+// Circular Progress Component
+const CircularProgress = ({ score, maxScore = 9, size = 100 }: { score: number; maxScore?: number; size?: number }) => {
+  const percentage = (score / maxScore) * 100;
+  const strokeWidth = 6;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (percentage / 100) * circumference;
+  
   return (
-    <svg width="280" height="300" className="mx-auto">
-      {/* Grid levels */}
-      {gridLines.map((path, i) => (
-        <path
-          key={`grid-${i}`}
-          d={path}
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        {/* Background circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
           fill="none"
-          stroke="hsl(var(--border))"
-          strokeWidth="1"
-          opacity={0.5}
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-muted/30"
         />
-      ))}
-
-      {/* Axis lines */}
-      {axisLines.map((line, i) => (
-        <line
-          key={`axis-${i}`}
-          x1={centerX}
-          y1={centerY}
-          x2={line.x2}
-          y2={line.y2}
-          stroke="hsl(var(--border))"
-          strokeWidth="1"
-          opacity={0.5}
+        {/* Progress circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="text-foreground transition-all duration-1000 ease-out"
         />
-      ))}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-bold text-foreground">{score.toFixed(1)}</span>
+        <span className="text-[10px] text-muted-foreground">/ {maxScore}</span>
+      </div>
+    </div>
+  );
+};
 
-      {/* Data polygon */}
-      <path
-        d={polygonPath}
-        fill={color}
-        fillOpacity={0.3}
-        stroke={color}
-        strokeWidth="2"
-      />
-
-      {/* Data points and labels */}
-      {points.map((point, i) => (
-        <g key={`point-${i}`}>
-          {/* Score badge */}
-          <rect
-            x={point.labelX - 20}
-            y={point.labelY - 25}
-            width="40"
-            height="24"
-            rx="12"
-            fill={color}
-          />
-          <text
-            x={point.labelX}
-            y={point.labelY - 9}
-            textAnchor="middle"
-            className="text-xs font-bold fill-white"
-          >
-            {point.score.toFixed(1)}
-          </text>
-          {/* Label */}
-          <text
-            x={point.labelX}
-            y={point.labelY + 10}
-            textAnchor="middle"
-            className="text-xs fill-muted-foreground"
-          >
-            {point.name}
-          </text>
-          {/* Point dot */}
-          <circle
-            cx={point.x}
-            cy={point.y}
-            r="4"
-            fill={color}
-            stroke="white"
-            strokeWidth="2"
-          />
-        </g>
-      ))}
-    </svg>
+// Horizontal Bar Component
+const HorizontalBar = ({ name, score, maxScore = 9, index }: { name: string; score: number; maxScore?: number; index: number }) => {
+  const percentage = (score / maxScore) * 100;
+  const isHighScore = score >= 7;
+  const isLowScore = score < 6;
+  
+  return (
+    <div className="group">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-medium text-foreground">{name}</span>
+        <div className="flex items-center gap-1.5">
+          <span className={cn(
+            "text-xs font-bold",
+            isHighScore ? "text-emerald-600" : isLowScore ? "text-red-600" : "text-foreground"
+          )}>
+            {score.toFixed(1)}
+          </span>
+          {isHighScore && <TrendingUp className="w-3 h-3 text-emerald-600" />}
+          {isLowScore && <AlertCircle className="w-3 h-3 text-red-600" />}
+        </div>
+      </div>
+      <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all duration-700 ease-out",
+            isHighScore ? "bg-gradient-to-r from-emerald-500 to-emerald-400" :
+            isLowScore ? "bg-gradient-to-r from-red-500 to-red-400" :
+            "bg-gradient-to-r from-foreground to-foreground/70"
+          )}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+    </div>
   );
 };
 
@@ -184,12 +143,10 @@ const WritingCriteriaBreakdown = ({ sectionScores }: WritingCriteriaBreakdownPro
         examinerPerspective: "IELTS examiners look for complete task coverage and accurate data interpretation.",
         subCriteria: [
           { name: "Coverage", score: Math.min(9, taskScore + 1) },
-          { name: "Key features", score: taskScore },
+          { name: "Key Features", score: taskScore },
           { name: "Overview", score: taskScore },
         ],
-        icon: <CheckCircle2 className="w-5 h-5 text-purple-500" />,
-        color: "#a855f7",
-        bgColor: "bg-purple-500/20",
+        icon: <CheckCircle2 className="w-5 h-5" />,
       },
       {
         key: "coherence-cohesion",
@@ -200,13 +157,11 @@ const WritingCriteriaBreakdown = ({ sectionScores }: WritingCriteriaBreakdownPro
         examinerPerspective: "Examiners evaluate logical flow and effective use of cohesive devices.",
         subCriteria: [
           { name: "Progression", score: Math.min(9, coherenceScore + 0.5) },
-          { name: "Cohesive devices", score: coherenceScore },
+          { name: "Cohesive Devices", score: coherenceScore },
           { name: "Paragraphing", score: coherenceScore },
           { name: "Referencing", score: Math.min(9, coherenceScore + 0.5) },
         ],
-        icon: <Link2 className="w-5 h-5 text-green-500" />,
-        color: "#22c55e",
-        bgColor: "bg-green-500/20",
+        icon: <Link2 className="w-5 h-5" />,
       },
       {
         key: "lexical-resource",
@@ -216,13 +171,11 @@ const WritingCriteriaBreakdown = ({ sectionScores }: WritingCriteriaBreakdownPro
         scoreSummary: "The writer demonstrates a modest lexical range with a few appropriate collocations and linking phrases, though overall the vocabulary remains fairly basic.",
         examinerPerspective: "IELTS examiners assess vocabulary range, accuracy, and appropriateness.",
         subCriteria: [
-          { name: "Range of vocabulary", score: lexicalScore },
+          { name: "Range of Vocabulary", score: lexicalScore },
           { name: "Spelling", score: lexicalScore },
           { name: "Accuracy", score: lexicalScore },
         ],
-        icon: <BookText className="w-5 h-5 text-amber-500" />,
-        color: "#f59e0b",
-        bgColor: "bg-amber-500/20",
+        icon: <BookText className="w-5 h-5" />,
       },
       {
         key: "grammatical-range",
@@ -232,13 +185,11 @@ const WritingCriteriaBreakdown = ({ sectionScores }: WritingCriteriaBreakdownPro
         scoreSummary: "The essay displays a narrow grammatical range with frequent subject-verb agreement and verb-form errors, plus several punctuation problems, leading to limited grammatical accuracy.",
         examinerPerspective: "Examiners evaluate both grammatical range and accuracy in assessment.",
         subCriteria: [
-          { name: "Range of structures", score: grammaticalScore },
+          { name: "Range of Structures", score: grammaticalScore },
           { name: "Punctuation", score: grammaticalScore },
           { name: "Accuracy", score: grammaticalScore },
         ],
-        icon: <SpellCheck className="w-5 h-5 text-red-500" />,
-        color: "#ef4444",
-        bgColor: "bg-red-500/20",
+        icon: <SpellCheck className="w-5 h-5" />,
       },
     ];
   };
@@ -247,76 +198,157 @@ const WritingCriteriaBreakdown = ({ sectionScores }: WritingCriteriaBreakdownPro
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-semibold">Criteria Breakdown</h3>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-foreground">Criteria Breakdown</h3>
+        <div className="hidden sm:flex items-center gap-3 text-[10px]">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-muted-foreground">Strong</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-foreground" />
+            <span className="text-muted-foreground">Average</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-muted-foreground">Improve</span>
+          </div>
+        </div>
+      </div>
+
       <Accordion type="single" collapsible className="space-y-3">
-        {criteriaData.map((criterion) => (
-          <AccordionItem
-            key={criterion.key}
-            value={criterion.key}
-            className="border border-border rounded-lg overflow-hidden"
-          >
-            <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/30">
-              <div className="flex items-center gap-4 flex-1">
-                <div className={`w-10 h-10 rounded-full ${criterion.bgColor} flex items-center justify-center`}>
-                  {criterion.icon}
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="font-medium text-sm">{criterion.name}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xl font-bold" style={{ color: criterion.color }}>
-                      {criterion.score.toFixed(1)}
-                    </span>
-                    <div className="flex-1 h-2 max-w-[120px] bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full rounded-full transition-all"
-                        style={{ 
-                          width: `${(criterion.score / 9) * 100}%`,
-                          backgroundColor: criterion.color 
-                        }}
-                      />
+        {criteriaData.map((criterion) => {
+          const scoreLevel = getScoreLevel(criterion.score);
+          const avgSubScore = criterion.subCriteria.reduce((a, b) => a + b.score, 0) / criterion.subCriteria.length;
+          
+          return (
+            <AccordionItem
+              key={criterion.key}
+              value={criterion.key}
+              className="rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-foreground/20"
+            >
+              <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/30">
+                <div className="flex items-center gap-3 flex-1">
+                  {/* Icon */}
+                  <div className="w-10 h-10 rounded-lg bg-foreground/5 border border-border flex items-center justify-center">
+                    <span className="text-foreground">{criterion.icon}</span>
+                  </div>
+                  
+                  {/* Title & Score */}
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-foreground text-sm">{criterion.name}</p>
+                      <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-muted", scoreLevel.color)}>
+                        {scoreLevel.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <span className="text-2xl font-bold text-foreground">{criterion.score.toFixed(1)}</span>
+                      <div className="flex-1 max-w-[120px]">
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-foreground rounded-full transition-all duration-500"
+                            style={{ width: `${(criterion.score / 9) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">/ 9.0</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-6">
-              {/* Explanation */}
-              <div className="mb-6 p-3 rounded-lg border-l-4" style={{ borderColor: criterion.color, backgroundColor: `${criterion.color}10` }}>
-                <p className="text-sm" style={{ color: criterion.color }}>
-                  {criterion.explanation}
-                </p>
-              </div>
+              </AccordionTrigger>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Radar Chart */}
-                <div className="flex items-center justify-center">
-                  <RadarChart data={criterion.subCriteria} color={criterion.color} />
+              <AccordionContent className="px-4 pb-5">
+                {/* Description */}
+                <div className="rounded-lg bg-muted/50 border border-border p-3 mb-5 mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    {criterion.explanation}
+                  </p>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="space-y-4">
-                  <Card className="p-4 border-l-4" style={{ borderLeftColor: criterion.color }}>
-                    <h4 className="font-semibold text-sm mb-2" style={{ color: criterion.color }}>
-                      Score Summary
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {criterion.scoreSummary}
-                    </p>
-                  </Card>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  {/* Left: Circular Score + Sub-criteria Bars */}
+                  <div className="lg:col-span-5 space-y-5">
+                    {/* Main Score Circle */}
+                    <div className="flex items-center justify-center py-2">
+                      <CircularProgress score={criterion.score} />
+                    </div>
+                    
+                    {/* Sub-criteria Bars */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-semibold text-foreground flex items-center gap-2">
+                        <span className="w-0.5 h-3 bg-foreground rounded-full" />
+                        Sub-Criteria
+                      </h4>
+                      <div className="space-y-3">
+                        {criterion.subCriteria.map((sub, index) => (
+                          <HorizontalBar 
+                            key={sub.name} 
+                            name={sub.name} 
+                            score={sub.score} 
+                            index={index}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
-                  <Card className="p-4 border-l-4" style={{ borderLeftColor: criterion.color }}>
-                    <h4 className="font-semibold text-sm mb-2" style={{ color: criterion.color }}>
-                      Examiner's Perspective
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {criterion.examinerPerspective}
-                    </p>
-                  </Card>
+                  {/* Right: Feedback Cards */}
+                  <div className="lg:col-span-7 space-y-3">
+                    {/* Score Summary */}
+                    <div className="rounded-lg border border-border p-4 bg-card hover:border-foreground/20 transition-colors">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-md bg-foreground/5 flex items-center justify-center flex-shrink-0">
+                          <Target className="w-3.5 h-3.5 text-foreground" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground text-sm mb-1.5">Score Analysis</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {criterion.scoreSummary}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Examiner's Perspective */}
+                    <div className="rounded-lg border border-border p-4 bg-card hover:border-foreground/20 transition-colors">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-md bg-foreground/5 flex items-center justify-center flex-shrink-0">
+                          <Lightbulb className="w-3.5 h-3.5 text-foreground" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground text-sm mb-1.5">Examiner's Insight</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {criterion.examinerPerspective}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-lg border border-border p-2.5 text-center bg-card">
+                        <p className="text-lg font-bold text-foreground">{criterion.subCriteria.length}</p>
+                        <p className="text-[10px] text-muted-foreground">Metrics</p>
+                      </div>
+                      <div className="rounded-lg border border-border p-2.5 text-center bg-card">
+                        <p className="text-lg font-bold text-foreground">{avgSubScore.toFixed(1)}</p>
+                        <p className="text-[10px] text-muted-foreground">Average</p>
+                      </div>
+                      <div className="rounded-lg border border-border p-2.5 text-center bg-card">
+                        <p className="text-lg font-bold text-foreground">
+                          {Math.max(...criterion.subCriteria.map(s => s.score)).toFixed(1)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">Best</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
       </Accordion>
     </div>
   );

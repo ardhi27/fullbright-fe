@@ -1,3 +1,8 @@
+/**
+ * IELTSExam Page - Fullbright Theme
+ * Updated: Added confirmation dialog before submit
+ */
+
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,6 +12,7 @@ import logo from "@/assets/logo-wordmark.png";
 import { ArrowLeft, Clock, ChevronLeft, ChevronRight, Play, Pause, Volume2, AlertCircle, Trophy, Target, BookOpen, Headphones, PenTool, RotateCcw, Check, Timer, FlaskConical, GraduationCap, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useExamResults } from "@/hooks/useExamResults";
+import ExamSubmitConfirmDialog from "@/components/exam/ExamSubmitConfirmDialog";
 
 const readingPassage = `The Rise of Artificial Intelligence in Modern Healthcare
 
@@ -169,6 +175,10 @@ const IELTSExam = () => {
   const isFinal = mode === "final";
   const { saveResult } = useExamResults();
   
+  // Submit confirmation dialog state
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [currentSection, setCurrentSection] = useState<"listening" | "reading" | "writing">("listening");
   const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
   const [currentWritingTask, setCurrentWritingTask] = useState<1 | 2>(1);
@@ -192,7 +202,8 @@ const IELTSExam = () => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleSubmitExam();
+          // Auto submit when time is up
+          processExamSubmission();
           return 0;
         }
         return prev - 1;
@@ -254,7 +265,25 @@ const IELTSExam = () => {
 
   const sampleAudioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
-  const handleSubmitExam = async () => {
+  const getTotalAnswered = () => {
+    const mcAnswered = Object.keys(answers.listening).length + Object.keys(answers.reading).length;
+    const writingAttempted = (task1WordCount > 0 ? 1 : 0) + (task2WordCount > 0 ? 1 : 0);
+    return mcAnswered + writingAttempted;
+  };
+
+  const getTotalQuestions = () => {
+    return listeningQuestions.length + readingQuestions.length + 2; // +2 for writing tasks
+  };
+
+  // Handle click on submit button - show confirmation dialog
+  const handleSubmitClick = () => {
+    setShowSubmitConfirm(true);
+  };
+
+  // Process the actual exam submission
+  const processExamSubmission = async () => {
+    setIsSubmitting(true);
+    
     let listeningCorrect = 0;
     let readingCorrect = 0;
 
@@ -273,7 +302,6 @@ const IELTSExam = () => {
       task2WordCount
     );
     setExamResults(results);
-    setShowResults(true);
 
     // Save results to database
     if (!resultsSaved) {
@@ -296,6 +324,30 @@ const IELTSExam = () => {
       });
       if (saved) setResultsSaved(true);
     }
+
+    setIsSubmitting(false);
+    setShowSubmitConfirm(false);
+
+    // For Final mode, redirect to thank you page
+    if (isFinal) {
+      navigate("/exam/thank-you", {
+        state: {
+          examType: "ielts",
+          examMode: mode,
+          totalQuestions: getTotalQuestions(),
+          answeredQuestions: getTotalAnswered(),
+          submittedAt: new Date().toISOString(),
+        },
+      });
+    } else {
+      // For Simulasi, show results directly
+      setShowResults(true);
+    }
+  };
+
+  // Legacy handler for backward compatibility
+  const handleSubmitExam = () => {
+    handleSubmitClick();
   };
 
   const handleRetakeExam = () => {
@@ -310,36 +362,34 @@ const IELTSExam = () => {
     setHasPlayed(false);
     setAudioEnded(false);
     setCurrentTime(0);
+    setTimeLeft(150 * 60);
+    setResultsSaved(false);
   };
 
-  const getTotalAnswered = () => {
-    const mcAnswered = Object.keys(answers.listening).length + Object.keys(answers.reading).length;
-    const writingAttempted = (task1WordCount > 0 ? 1 : 0) + (task2WordCount > 0 ? 1 : 0);
-    return mcAnswered + writingAttempted;
-  };
-
-  const getTotalQuestions = () => {
-    return listeningQuestions.length + readingQuestions.length + 2; // +2 for writing tasks
-  };
-
-  // Results View
+  // Results View (only for Simulasi mode)
   if (showResults && examResults) {
     const bandLevel = getBandLevel(examResults.overallBand);
     
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col relative">
+        {/* Background */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-red-500/[0.03] via-transparent to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-gray-500/[0.03] via-transparent to-transparent rounded-full blur-3xl" />
+        </div>
+
         {/* Header */}
-        <header className="border-b border-border bg-card sticky top-0 z-10">
+        <header className="sticky top-0 z-50 glass-card border-b border-border/50">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-14">
               <div className="flex items-center gap-4">
                 <img src={logo} alt="Fullbright Indonesia" className="h-8" />
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-muted-foreground">IELTS Academic - Hasil Ujian</span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 border ${
                     isSimulasi 
-                      ? "bg-blue-500/10 text-blue-600" 
-                      : "bg-orange-500/10 text-orange-600"
+                      ? "bg-gray-100 text-gray-700 border-gray-200" 
+                      : "bg-red-100 text-red-600 border-red-200"
                   }`}>
                     {isSimulasi ? <FlaskConical className="w-3 h-3" /> : <GraduationCap className="w-3 h-3" />}
                     {isSimulasi ? "Simulasi" : "Final"}
@@ -350,24 +400,24 @@ const IELTSExam = () => {
           </div>
         </header>
 
-        <main className="flex-1 container mx-auto px-4 py-8">
+        <main className="flex-1 container mx-auto px-4 py-8 relative">
           <div className="max-w-4xl mx-auto">
             {/* Score Overview */}
-            <div className="bg-card rounded-2xl border border-border p-8 mb-8">
+            <div className="bg-card rounded-2xl border border-border shadow-lg p-6 sm:p-8 mb-8 animate-fade-up">
               <div className="text-center mb-8">
-                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Trophy className="w-12 h-12 text-primary" />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 rounded-full bg-red-100 border border-red-200 flex items-center justify-center">
+                  <Trophy className="w-10 h-10 sm:w-12 sm:h-12 text-red-600" />
                 </div>
-                <h1 className="text-3xl font-bold mb-2">Hasil Ujian IELTS Academic</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2">Hasil Ujian IELTS Academic</h1>
                 <p className="text-muted-foreground">
                   Berikut adalah hasil {isSimulasi ? "simulasi" : "ujian final"} Anda berdasarkan IELTS Band Descriptors
                 </p>
               </div>
 
               {/* Overall Band Score */}
-              <div className="text-center mb-8 p-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+              <div className="text-center mb-8 p-6 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 border border-red-200">
                 <p className="text-sm text-muted-foreground mb-2">Overall Band Score</p>
-                <p className="text-6xl font-bold text-primary mb-2">{examResults.overallBand}</p>
+                <p className="text-5xl sm:text-6xl font-bold text-red-600 mb-2">{examResults.overallBand}</p>
                 <p className={`text-lg font-semibold ${bandLevel.color}`}>{bandLevel.level}</p>
                 <p className="text-sm text-muted-foreground mt-1">{bandLevel.description}</p>
                 <p className="text-xs text-muted-foreground mt-2">Band Score: 1 - 9</p>
@@ -375,10 +425,10 @@ const IELTSExam = () => {
 
               {/* Section Scores */}
               <div className="grid md:grid-cols-3 gap-4 mb-8">
-                <div className="p-5 rounded-xl bg-secondary/50 border border-border">
+                <div className="p-5 rounded-xl bg-gray-50 border border-gray-200">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Headphones className="w-5 h-5 text-blue-500" />
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center">
+                      <Headphones className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Listening</p>
@@ -391,10 +441,10 @@ const IELTSExam = () => {
                   </p>
                 </div>
 
-                <div className="p-5 rounded-xl bg-secondary/50 border border-border">
+                <div className="p-5 rounded-xl bg-gray-50 border border-gray-200">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-green-500" />
+                    <div className="w-10 h-10 rounded-lg bg-green-100 border border-green-200 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Reading</p>
@@ -407,14 +457,14 @@ const IELTSExam = () => {
                   </p>
                 </div>
 
-                <div className="p-5 rounded-xl bg-secondary/50 border border-border">
+                <div className="p-5 rounded-xl bg-red-50 border border-red-200">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                      <PenTool className="w-5 h-5 text-purple-500" />
+                    <div className="w-10 h-10 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center">
+                      <PenTool className="w-5 h-5 text-red-600" />
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Writing</p>
-                      <p className="text-2xl font-bold">Band {examResults.writing.band}</p>
+                      <p className="text-2xl font-bold text-red-600">Band {examResults.writing.band}</p>
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground space-y-1">
@@ -425,68 +475,68 @@ const IELTSExam = () => {
               </div>
 
               {/* Writing Criteria Breakdown */}
-              <div className="bg-secondary/30 rounded-xl p-6 mb-6">
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <PenTool className="w-5 h-5 text-primary" />
+                  <PenTool className="w-5 h-5 text-red-600" />
                   Writing Band Descriptors Breakdown
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-background border border-border">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200">
                       <span className="text-sm">Task Achievement</span>
-                      <span className="font-semibold text-primary">Band {examResults.writing.criteria.taskAchievement}</span>
+                      <span className="font-semibold text-red-600">Band {examResults.writing.criteria.taskAchievement}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-background border border-border">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200">
                       <span className="text-sm">Coherence & Cohesion</span>
-                      <span className="font-semibold text-primary">Band {examResults.writing.criteria.coherenceCohesion}</span>
+                      <span className="font-semibold text-red-600">Band {examResults.writing.criteria.coherenceCohesion}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-background border border-border">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200">
                       <span className="text-sm">Lexical Resource</span>
-                      <span className="font-semibold text-primary">Band {examResults.writing.criteria.lexicalResource}</span>
+                      <span className="font-semibold text-red-600">Band {examResults.writing.criteria.lexicalResource}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-background border border-border">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200">
                       <span className="text-sm">Grammatical Range</span>
-                      <span className="font-semibold text-primary">Band {examResults.writing.criteria.grammaticalRange}</span>
+                      <span className="font-semibold text-red-600">Band {examResults.writing.criteria.grammaticalRange}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Score Interpretation */}
-              <div className="bg-secondary/30 rounded-xl p-6 mb-6">
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
+                  <Target className="w-5 h-5 text-red-600" />
                   Interpretasi IELTS Band Score
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-2">
-                    <div className="flex justify-between p-2 rounded bg-green-500/10">
+                    <div className="flex justify-between p-2 rounded bg-green-50 border border-green-200">
                       <span>Band 8-9 (Expert)</span>
                       <span className="text-green-600 font-medium">Sangat Mahir</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded bg-primary/10">
+                    <div className="flex justify-between p-2 rounded bg-red-50 border border-red-200">
                       <span>Band 7-7.5 (Good)</span>
-                      <span className="text-primary font-medium">Baik</span>
+                      <span className="text-red-600 font-medium">Baik</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded bg-accent/10">
+                    <div className="flex justify-between p-2 rounded bg-blue-50 border border-blue-200">
                       <span>Band 6-6.5 (Competent)</span>
-                      <span className="text-accent font-medium">Kompeten</span>
+                      <span className="text-blue-600 font-medium">Kompeten</span>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between p-2 rounded bg-yellow-500/10">
+                    <div className="flex justify-between p-2 rounded bg-yellow-50 border border-yellow-200">
                       <span>Band 5-5.5 (Modest)</span>
                       <span className="text-yellow-600 font-medium">Sedang</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded bg-orange-500/10">
+                    <div className="flex justify-between p-2 rounded bg-orange-50 border border-orange-200">
                       <span>Band 4-4.5 (Limited)</span>
                       <span className="text-orange-600 font-medium">Terbatas</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded bg-red-500/10">
+                    <div className="flex justify-between p-2 rounded bg-gray-100 border border-gray-200">
                       <span>Band 1-3.5 (Basic)</span>
-                      <span className="text-red-600 font-medium">Dasar</span>
+                      <span className="text-gray-600 font-medium">Dasar</span>
                     </div>
                   </div>
                 </div>
@@ -494,11 +544,11 @@ const IELTSExam = () => {
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="outline" onClick={() => navigate("/dashboard/ielts")} className="gap-2">
+                <Button variant="outline" onClick={() => navigate("/dashboard/ielts")} className="gap-2 hover:bg-gray-100">
                   <ArrowLeft className="w-4 h-4" />
                   Kembali ke Menu
                 </Button>
-                <Button onClick={handleRetakeExam} className="gap-2">
+                <Button onClick={handleRetakeExam} className="gap-2 bg-red-600 hover:bg-red-700 text-white">
                   <RotateCcw className="w-4 h-4" />
                   Ulangi Ujian
                 </Button>
@@ -506,7 +556,7 @@ const IELTSExam = () => {
             </div>
 
             {/* Answer Review */}
-            <div className="bg-card rounded-2xl border border-border p-6">
+            <div className="bg-card rounded-2xl border border-border shadow-lg p-6 animate-fade-up animation-delay-200">
               <h3 className="font-semibold mb-4">Review Jawaban</h3>
               
               {/* Listening Review */}
@@ -519,7 +569,7 @@ const IELTSExam = () => {
                     const userAnswer = answers.listening[idx];
                     const isCorrect = userAnswer === q.answer;
                     return (
-                      <div key={idx} className={`p-3 rounded-lg border ${isCorrect ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                      <div key={idx} className={`p-3 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                         <p className="text-sm font-medium mb-1">Q{idx + 1}: {q.question}</p>
                         <div className="flex gap-4 text-xs">
                           <span className={isCorrect ? 'text-green-600' : 'text-red-600'}>
@@ -545,7 +595,7 @@ const IELTSExam = () => {
                     const userAnswer = answers.reading[idx];
                     const isCorrect = userAnswer === q.answer;
                     return (
-                      <div key={idx} className={`p-3 rounded-lg border ${isCorrect ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                      <div key={idx} className={`p-3 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                         <p className="text-sm font-medium mb-1">Q{idx + 1}: {q.question}</p>
                         <div className="flex gap-4 text-xs">
                           <span className={isCorrect ? 'text-green-600' : 'text-red-600'}>
@@ -567,13 +617,13 @@ const IELTSExam = () => {
                   <PenTool className="w-4 h-4" /> Writing Section
                 </h4>
                 <div className="space-y-4">
-                  <div className="p-4 rounded-lg border border-border bg-secondary/30">
+                  <div className="p-4 rounded-lg border border-gray-200 bg-gray-50">
                     <p className="text-sm font-medium mb-2">Task 1 ({task1WordCount} kata)</p>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                       {writingTask1Answer || "(Tidak dijawab)"}
                     </p>
                   </div>
-                  <div className="p-4 rounded-lg border border-border bg-secondary/30">
+                  <div className="p-4 rounded-lg border border-gray-200 bg-gray-50">
                     <p className="text-sm font-medium mb-2">Task 2 ({task2WordCount} kata)</p>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                       {writingTask2Answer || "(Tidak dijawab)"}
@@ -589,7 +639,25 @@ const IELTSExam = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
+      {/* Submit Confirmation Dialog */}
+      <ExamSubmitConfirmDialog
+        isOpen={showSubmitConfirm}
+        onClose={() => setShowSubmitConfirm(false)}
+        onConfirm={processExamSubmission}
+        examType="IELTS"
+        totalQuestions={getTotalQuestions()}
+        answeredQuestions={getTotalAnswered()}
+        timeRemaining={isFinal ? formatTime(timeLeft) : undefined}
+        isLoading={isSubmitting}
+      />
+
+      {/* Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-red-500/[0.03] via-transparent to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-gray-500/[0.03] via-transparent to-transparent rounded-full blur-3xl" />
+      </div>
+
       {/* Audio Element */}
       <audio
         ref={audioRef}
@@ -600,21 +668,21 @@ const IELTSExam = () => {
       />
 
       {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-10">
+      <header className="sticky top-0 z-50 glass-card border-b border-border/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-2 sm:gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/ielts")} className="px-2 sm:px-3">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/ielts")} className="px-2 sm:px-3 hover:bg-red-50 hover:text-red-600">
                 <ArrowLeft className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Kembali</span>
               </Button>
               <img src={logo} alt="Fullbright Indonesia" className="h-6 hidden md:block" />
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground hidden sm:inline">IELTS Academic</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${
-                  isSimulasi
-                    ? "bg-blue-500/10 text-blue-600"
-                    : "bg-orange-500/10 text-orange-600"
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 border ${
+                isSimulasi
+                ? "bg-gray-100 text-gray-700 border-gray-200"
+                : "bg-red-100 text-red-600 border-red-200"
                 }`}>
                   {isSimulasi ? <FlaskConical className="w-3 h-3" /> : <GraduationCap className="w-3 h-3" />}
                   {isSimulasi ? "Simulasi" : "Final"}
@@ -640,8 +708,8 @@ const IELTSExam = () => {
                         onClick={() => { setCurrentSection("listening"); setCurrentQuestion(0); setSectionMenuOpen(false); }}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           currentSection === "listening"
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-secondary"
+                            ? "bg-red-100 text-red-600"
+                            : "hover:bg-gray-100"
                         }`}
                       >
                         <Headphones className="w-4 h-4" />
@@ -651,8 +719,8 @@ const IELTSExam = () => {
                         onClick={() => { setCurrentSection("reading"); setCurrentQuestion(0); setSectionMenuOpen(false); }}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           currentSection === "reading"
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-secondary"
+                            ? "bg-red-100 text-red-600"
+                            : "hover:bg-gray-100"
                         }`}
                       >
                         <BookOpen className="w-4 h-4" />
@@ -662,8 +730,8 @@ const IELTSExam = () => {
                         onClick={() => { setCurrentSection("writing"); setSectionMenuOpen(false); }}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           currentSection === "writing"
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-secondary"
+                            ? "bg-red-100 text-red-600"
+                            : "hover:bg-gray-100"
                         }`}
                       >
                         <PenTool className="w-4 h-4" />
@@ -675,33 +743,33 @@ const IELTSExam = () => {
               </div>
 
               {/* Desktop Section Tabs */}
-              <div className="hidden md:flex items-center gap-1">
+              <div className="hidden md:flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
                 <button
                   onClick={() => { setCurrentSection("listening"); setCurrentQuestion(0); }}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     currentSection === "listening"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-secondary"
+                      ? "bg-red-600 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Listening
                 </button>
                 <button
                   onClick={() => { setCurrentSection("reading"); setCurrentQuestion(0); }}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     currentSection === "reading"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-secondary"
+                      ? "bg-red-600 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Reading
                 </button>
                 <button
                   onClick={() => setCurrentSection("writing")}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     currentSection === "writing"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-secondary"
+                      ? "bg-red-600 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Writing
@@ -709,9 +777,9 @@ const IELTSExam = () => {
               </div>
 
               {isFinal && (
-                <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                  <Timer className="w-4 h-4 text-orange-600" />
-                  <span className="font-mono font-semibold text-orange-600 text-sm">{formatTime(timeLeft)}</span>
+                <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-red-100 border border-red-200">
+                  <Timer className="w-4 h-4 text-red-600" />
+                  <span className="font-mono font-semibold text-red-600 text-sm">{formatTime(timeLeft)}</span>
                 </div>
               )}
             </div>
@@ -720,25 +788,25 @@ const IELTSExam = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6">
+      <main className="flex-1 container mx-auto px-4 py-6 relative">
         {currentSection === "listening" && (
           <div className="max-w-4xl mx-auto">
             {!audioEnded ? (
               /* Audio Player Section */
-              <div className="bg-card rounded-xl border border-border p-8">
+              <div className="bg-card rounded-xl border border-border shadow-lg p-6 sm:p-8 animate-fade-up">
                 <div className="text-center mb-8">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Volume2 className="w-10 h-10 text-primary" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-full bg-red-100 border border-red-200 flex items-center justify-center">
+                    <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 text-red-600" />
                   </div>
-                  <h2 className="text-2xl font-bold mb-2">IELTS Listening Test</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2">IELTS Listening Test</h2>
                   <p className="text-muted-foreground">Section 1: Library Registration</p>
                 </div>
 
                 {/* Warning */}
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20 mb-8">
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200 mb-8">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-destructive">Audio hanya dapat diputar satu kali</p>
+                    <p className="font-medium text-red-600">Audio hanya dapat diputar satu kali</p>
                     <p className="text-sm text-muted-foreground">
                       Sesuai dengan format ujian IELTS resmi, audio hanya akan diputar sekali. Pastikan Anda siap sebelum memulai.
                     </p>
@@ -746,10 +814,10 @@ const IELTSExam = () => {
                 </div>
 
                 {/* Audio Controls */}
-                <div className="bg-secondary/50 rounded-xl p-6">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
                   {!hasPlayed ? (
                     <div className="text-center">
-                      <Button size="lg" onClick={handlePlayAudio} className="gap-3">
+                      <Button size="lg" onClick={handlePlayAudio} className="gap-3 bg-red-600 hover:bg-red-700 text-white">
                         <Play className="w-6 h-6" />
                         Mulai Audio
                       </Button>
@@ -760,11 +828,11 @@ const IELTSExam = () => {
                   ) : (
                     <div className="space-y-4">
                       <div className="flex items-center justify-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center animate-pulse">
+                        <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center animate-pulse">
                           {isPlaying ? (
-                            <Pause className="w-6 h-6 text-primary-foreground" />
+                            <Pause className="w-6 h-6 text-white" />
                           ) : (
-                            <Play className="w-6 h-6 text-primary-foreground" />
+                            <Play className="w-6 h-6 text-white" />
                           )}
                         </div>
                         <div className="text-lg font-medium">
@@ -774,9 +842,9 @@ const IELTSExam = () => {
                       
                       {/* Progress Bar */}
                       <div className="space-y-2">
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-primary transition-all duration-300"
+                            className="h-full bg-red-600 transition-all duration-300"
                             style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
                           />
                         </div>
@@ -794,18 +862,18 @@ const IELTSExam = () => {
                   <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                     Lihat Transkrip (untuk demo)
                   </summary>
-                  <pre className="mt-4 p-4 bg-secondary/30 rounded-lg text-sm whitespace-pre-wrap">
+                  <pre className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm whitespace-pre-wrap">
                     {listeningTranscript}
                   </pre>
                 </details>
               </div>
             ) : (
               /* Questions Section */
-              <div className="bg-card rounded-xl border border-border p-6">
+              <div className="bg-card rounded-xl border border-border shadow-lg p-6 animate-fade-up">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <span className="text-sm text-muted-foreground">Listening Section 1</span>
-                    <h2 className="text-lg font-semibold text-primary">
+                    <h2 className="text-lg font-semibold text-red-600">
                       Question {currentQuestion + 1} of {listeningQuestions.length}
                     </h2>
                   </div>
@@ -816,10 +884,10 @@ const IELTSExam = () => {
                         onClick={() => setCurrentQuestion(idx)}
                         className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                           idx === currentQuestion
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-red-600 text-white"
                             : answers.listening[idx] !== undefined
-                            ? "bg-primary/20 text-primary"
-                            : "bg-secondary text-muted-foreground"
+                            ? "bg-red-100 text-red-600"
+                            : "bg-gray-100 text-muted-foreground"
                         }`}
                       >
                         {idx + 1}
@@ -842,16 +910,16 @@ const IELTSExam = () => {
                         }
                         className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                           answers.listening[currentQuestion] === option.charAt(0)
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/30"
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-200 hover:border-red-200"
                         }`}
                       >
                         <span className="flex items-center gap-3">
                           <span
                             className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                               answers.listening[currentQuestion] === option.charAt(0)
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-secondary"
+                                ? "bg-red-600 text-white"
+                                : "bg-gray-100"
                             }`}
                           >
                             {answers.listening[currentQuestion] === option.charAt(0) ? (
@@ -867,23 +935,25 @@ const IELTSExam = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-2">
                   <Button
                     variant="outline"
                     onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
                     disabled={currentQuestion === 0}
+                    className="flex-1 sm:flex-none"
                   >
-                    <ChevronLeft className="w-4 h-4 mr-2" />
-                    Sebelumnya
+                    <ChevronLeft className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Sebelumnya</span>
                   </Button>
                   <Button
                     onClick={() =>
                       setCurrentQuestion(Math.min(listeningQuestions.length - 1, currentQuestion + 1))
                     }
                     disabled={currentQuestion === listeningQuestions.length - 1}
+                    className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white"
                   >
-                    Selanjutnya
-                    <ChevronRight className="w-4 h-4 ml-2" />
+                    <span className="hidden sm:inline">Selanjutnya</span>
+                    <ChevronRight className="w-4 h-4 sm:ml-2" />
                   </Button>
                 </div>
               </div>
@@ -895,19 +965,19 @@ const IELTSExam = () => {
           <div className="max-w-6xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Reading Passage */}
-              <div className="bg-card rounded-xl border border-border p-6 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
-                <h3 className="font-semibold text-primary mb-4">Reading Passage</h3>
+              <div className="bg-card rounded-xl border border-border shadow-lg p-6 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto animate-fade-up">
+                <h3 className="font-semibold text-red-600 mb-4">Reading Passage</h3>
                 <div className="prose prose-sm max-w-none">
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">{readingPassage}</p>
                 </div>
               </div>
 
               {/* Questions */}
-              <div className="bg-card rounded-xl border border-border p-6">
+              <div className="bg-card rounded-xl border border-border shadow-lg p-6 animate-fade-up animation-delay-100">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <span className="text-sm text-muted-foreground">Reading Comprehension</span>
-                    <h2 className="text-lg font-semibold text-primary">
+                    <h2 className="text-lg font-semibold text-red-600">
                       Question {currentQuestion + 1} of {readingQuestions.length}
                     </h2>
                   </div>
@@ -918,10 +988,10 @@ const IELTSExam = () => {
                         onClick={() => setCurrentQuestion(idx)}
                         className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                           idx === currentQuestion
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-red-600 text-white"
                             : answers.reading[idx] !== undefined
-                            ? "bg-primary/20 text-primary"
-                            : "bg-secondary text-muted-foreground"
+                            ? "bg-red-100 text-red-600"
+                            : "bg-gray-100 text-muted-foreground"
                         }`}
                       >
                         {idx + 1}
@@ -944,16 +1014,16 @@ const IELTSExam = () => {
                         }
                         className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                           answers.reading[currentQuestion] === option.charAt(0)
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/30"
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-200 hover:border-red-200"
                         }`}
                       >
                         <span className="flex items-center gap-3">
                           <span
                             className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                               answers.reading[currentQuestion] === option.charAt(0)
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-secondary"
+                                ? "bg-red-600 text-white"
+                                : "bg-gray-100"
                             }`}
                           >
                             {answers.reading[currentQuestion] === option.charAt(0) ? (
@@ -969,23 +1039,25 @@ const IELTSExam = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-2">
                   <Button
                     variant="outline"
                     onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
                     disabled={currentQuestion === 0}
+                    className="flex-1 sm:flex-none"
                   >
-                    <ChevronLeft className="w-4 h-4 mr-2" />
-                    Sebelumnya
+                    <ChevronLeft className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Sebelumnya</span>
                   </Button>
                   <Button
                     onClick={() =>
                       setCurrentQuestion(Math.min(readingQuestions.length - 1, currentQuestion + 1))
                     }
                     disabled={currentQuestion === readingQuestions.length - 1}
+                    className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white"
                   >
-                    Selanjutnya
-                    <ChevronRight className="w-4 h-4 ml-2" />
+                    <span className="hidden sm:inline">Selanjutnya</span>
+                    <ChevronRight className="w-4 h-4 sm:ml-2" />
                   </Button>
                 </div>
               </div>
@@ -995,15 +1067,15 @@ const IELTSExam = () => {
 
         {currentSection === "writing" && (
           <div className="max-w-4xl mx-auto">
-            <div className="bg-card rounded-xl border border-border p-6">
+            <div className="bg-card rounded-xl border border-border shadow-lg p-6 animate-fade-up">
               {/* Task Tabs */}
               <div className="flex gap-2 mb-6">
                 <button
                   onClick={() => setCurrentWritingTask(1)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     currentWritingTask === 1
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-100 text-muted-foreground hover:bg-gray-200"
                   }`}
                 >
                   Task 1
@@ -1015,8 +1087,8 @@ const IELTSExam = () => {
                   onClick={() => setCurrentWritingTask(2)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     currentWritingTask === 2
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-100 text-muted-foreground hover:bg-gray-200"
                   }`}
                 >
                   Task 2
@@ -1030,7 +1102,7 @@ const IELTSExam = () => {
               <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-2">{currentTask.title}</h2>
                 <p className="text-sm text-muted-foreground mb-4">{currentTask.instruction}</p>
-                <div className="p-4 rounded-lg bg-secondary/50 mb-4">
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200 mb-4">
                   <p className="text-sm">{currentTask.prompt}</p>
                   {currentWritingTask === 1 && (
                     <pre className="mt-4 text-xs text-muted-foreground whitespace-pre-wrap">
@@ -1053,7 +1125,7 @@ const IELTSExam = () => {
                     Word count: {currentWordCount} / {minWords} minimum
                   </span>
                   {currentWordCount < minWords && (
-                    <span className="text-destructive">
+                    <span className="text-red-600">
                       {minWords - currentWordCount} kata lagi untuk mencapai minimum
                     </span>
                   )}
@@ -1065,7 +1137,7 @@ const IELTSExam = () => {
 
         {/* Submit Button */}
         <div className="max-w-4xl mx-auto mt-8">
-          <div className="bg-card rounded-xl border border-border p-6">
+          <div className="bg-card rounded-xl border border-border shadow-lg p-6 animate-fade-up animation-delay-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Progress Ujian</p>
@@ -1073,7 +1145,7 @@ const IELTSExam = () => {
                   {getTotalAnswered()} dari {getTotalQuestions()} bagian terjawab
                 </p>
               </div>
-              <Button size="lg" onClick={handleSubmitExam}>
+              <Button size="lg" onClick={handleSubmitClick} className="bg-red-600 hover:bg-red-700 text-white">
                 Selesai & Lihat Hasil
               </Button>
             </div>
