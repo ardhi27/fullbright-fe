@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 3000,
     allowedHosts: true,
+    hmr: {
+      host: "56b037e81fdf.ngrok-free.app",
+      protocol: "wss",
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

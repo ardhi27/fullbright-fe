@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd student && npm run build",
+  "outputDirectory": "student/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
