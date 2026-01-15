@@ -53,7 +53,7 @@ interface WritingAnswerFeedbackProps {
   minimumWords?: number;
   overallFeedback?: string;
   vocabularyList?: Array<{ word: string; meaning: string; example: string }>;
-
+  summaryFeedback?: string;
   useSampleData?: boolean;
 }
 

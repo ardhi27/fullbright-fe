@@ -34,8 +34,28 @@ interface CriterionDetail {
   icon: React.ReactNode;
 }
 
+interface CriteriaBreakdown {
+  taskAchievement?: {
+    score: number;
+  };
+  coherence?: {
+    score: number;
+  };
+  lexicalResource?: {
+    score: number;
+  };
+  grammaticalRange?: {
+    score: number;
+  };
+  TaskAchievement?: number;
+  CoherenceCohesion?: number;
+  LexicalResource?: number;
+  GrammaticalRange?: number;
+}
+
 interface WritingCriteriaBreakdownProps {
-  sectionScores: Record<string, unknown>;
+  sectionScores?: Record<string, unknown>;
+  criteria?: CriteriaBreakdown;
 }
 
 // Score level indicator
@@ -126,12 +146,27 @@ const HorizontalBar = ({ name, score, maxScore = 9, index }: { name: string; sco
   );
 };
 
-const WritingCriteriaBreakdown = ({ sectionScores }: WritingCriteriaBreakdownProps) => {
+const WritingCriteriaBreakdown = ({ sectionScores, criteria }: WritingCriteriaBreakdownProps) => {
   const getCriteriaData = (): CriterionDetail[] => {
-    const taskScore = (sectionScores?.TaskAchievement as number) || 6.0;
-    const coherenceScore = (sectionScores?.CoherenceCohesion as number) || 7.0;
-    const lexicalScore = (sectionScores?.LexicalResource as number) || 6.0;
-    const grammaticalScore = (sectionScores?.GrammaticalRange as number) || 6.0;
+    // Extract scores from criteria or sectionScores
+    let taskScore = 6.0;
+    let coherenceScore = 7.0;
+    let lexicalScore = 6.0;
+    let grammaticalScore = 6.0;
+
+    if (criteria) {
+      // Handle CriteriaBreakdown format (from Dashboard)
+      taskScore = criteria.taskAchievement?.score || criteria.TaskAchievement || 6.0;
+      coherenceScore = criteria.coherence?.score || criteria.CoherenceCohesion || 7.0;
+      lexicalScore = criteria.lexicalResource?.score || criteria.LexicalResource || 6.0;
+      grammaticalScore = criteria.grammaticalRange?.score || criteria.GrammaticalRange || 6.0;
+    } else if (sectionScores) {
+      // Handle Record format (from other sources)
+      taskScore = (sectionScores.TaskAchievement as number) || 6.0;
+      coherenceScore = (sectionScores.CoherenceCohesion as number) || 7.0;
+      lexicalScore = (sectionScores.LexicalResource as number) || 6.0;
+      grammaticalScore = (sectionScores.GrammaticalRange as number) || 6.0;
+    }
 
     return [
       {
